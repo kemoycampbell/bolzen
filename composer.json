@@ -1,0 +1,13 @@
+{
+  "name":"Bolzen",
+  "description": "Bolzen is a lightweight and skeleton framework that enable developers to build website & web application fast. Bolzen is built using symfony and twig",
+  "autoload": {
+    "psr-4": {
+      "Bolzen\\Core\\": "core/",
+      "Bolzen\\Src\\":"src/"
+    }
+  },
+  "require": {
+    "php": "^7.2"
+  }
+}
