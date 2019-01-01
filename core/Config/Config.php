@@ -7,6 +7,8 @@
 
 namespace Bolzen\Core\Config;
 
+use Symfony\Component\Dotenv\Dotenv;
+
 class Config implements ConfigInterface
 {
     private const ENVIRONMENT = "environment";
@@ -26,25 +28,33 @@ class Config implements ConfigInterface
     private $config;
     private $dotEnv;
     private $server;
+    private $databaseParametersLoaded;
 
     public function __construct()
     {
+        if (!$this->dotEnv) {
+            $this->dotEnv = new Dotenv();
+            $this->dotEnv->load(__DIR__.'/../../config/.env');
+        }
+
+
         $this->loadConfig();
-        $this->loadDotEnv();
+        $this->loadDatabaseParametersIfNeed();
     }
 
-    private function loadDotEnv()
+    /**
+     * This method loads the database parameters from the .env if needs
+     */
+    private function loadDatabaseParametersIfNeed()
     {
-        if (! $this->dotEnv && $this->isDatabaseRequired()) {
-            // $this->dotEnv = new Dotenv();
-            //$this->dotEnv->load(__DIR__.'/../../config/.env');
-
+        if (!$this->databaseParametersLoaded && $this->isDatabaseRequired()) {
             //ensure we have the database parameters
             $this->databaseNameValidation();
             $this->databaseHostValidation();
             $this->databasePasswordValidation();
             $this->databaseUserValidation();
             $this->databasePrefixValidation();
+            $this->databaseParametersLoaded = true;
         }
     }
 
@@ -70,7 +80,6 @@ class Config implements ConfigInterface
             $this->debugParameterValidation();
             $this->serverInfoValidation();
         }
-
     }
 
     /**
@@ -80,7 +89,6 @@ class Config implements ConfigInterface
     {
         //only do this if the environment is not already set
         if (!$this->environment) {
-
             if (empty($this->config)) {
                 throw new \InvalidArgumentException("config cannot be empty");
             }
@@ -148,9 +156,9 @@ class Config implements ConfigInterface
 
             if (!array_key_exists(self::DIRECTORY, $this->server)) {
                 throw new \InvalidArgumentException(self::DIRECTORY. " is missing from the config");
-            }elseif (!array_key_exists(self::SCHEME, $this->server)) {
+            } elseif (!array_key_exists(self::SCHEME, $this->server)) {
                 throw new \InvalidArgumentException(self::SCHEME." is missing from the config");
-            }elseif (!array_key_exists(self::HOST, $this->server)) {
+            } elseif (!array_key_exists(self::HOST, $this->server)) {
                 throw new \InvalidArgumentException(self::HOST. " is missing from the config");
             }
 
@@ -272,7 +280,8 @@ class Config implements ConfigInterface
     public function databaseDsn(): string
     {
         //$dsn = 'mysql:host=localhost;dbname=testdb';
-        return $this->databasePrefix().":host=".$this->databaseHost().";dbname=".$this->databaseName().";charset=utf8";
+        return $this->databasePrefix().":host=".$this->databaseHost().";dbname=".$this->databaseName().";
+        charset=utf8mb4";
     }
 
     /**

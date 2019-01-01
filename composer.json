@@ -8,6 +8,16 @@
     }
   },
   "require": {
-    "php": "^7.2"
+    "php": "^7.2",
+    "symfony/http-foundation": "^4.1",
+    "symfony/routing": "^4.1",
+    "symfony/http-kernel": "^4.1",
+    "symfony/event-dispatcher": "^4.1",
+    "symfony/dependency-injection": "^4.1",
+    "twig/twig": "^2.0"
+  },
+  "require-dev": {
+    "symfony/dotenv": "^4.2",
+    "phpunit/phpunit": "^7"
   }
 }

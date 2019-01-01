@@ -127,6 +127,9 @@ Temporary Items
 .env.bolzen
 .env
 
+.git*
+.git/*
+
 composer.lock
 phpunit.xml
 .php_cs.cache

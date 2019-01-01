@@ -10,7 +10,7 @@ return array(
     # APPLICATION HOSTING ENVIRONMENT #
     ###################################
     'dev'=>array(
-        'directory'=>'test',
+        'directory'=>'huston',
         'scheme'=>'http',
         'host'=>'localhost'
 
