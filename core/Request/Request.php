@@ -47,12 +47,15 @@ class Request
     {
         $projectDir = $this->config->projectDirectory();
         $path = strtolower($this->request->getPathInfo());
+
+//        echo $path;
+//        exit;
         $path = $this->removeExtension($path);
         $path = $this->urlSlashesFormat($path);
 
         //need to redirect to index page?
         if ($path==="/" || $path === "" || $path==="/".$projectDir."/" || $path==="/$projectDir") {
-            $path = "/".$projectDir."/".$this->accessControl->getCSRFToken()."/index";
+            $path = "/".$projectDir."/index";
         }
         return $path;
     }

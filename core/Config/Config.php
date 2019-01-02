@@ -14,7 +14,6 @@ class Config implements ConfigInterface
     private const ENVIRONMENT = "environment";
     private const DEBUG = "debug";
     private const ENABLEDATABASE = "enableDatabase";
-    private const HASH = "hash";
     private const DIRECTORY = "directory";
     private const SCHEME = "scheme";
     private const HOST = "host";

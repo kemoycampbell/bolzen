@@ -45,8 +45,18 @@ class RouteCollection implements RouteCollectionInterface
     {
         //append the project directory and token
         $token = $this->accessControl->getCSRFToken();
-        $path = strtolower($this->config->projectDirectory()."/".$token."/".$route->getPath());
-        //$path = strtolower($this->config->getProjectDirectory().$route->getPath());
+
+        $path = $route->getPath();
+
+        if (!empty($path)) {
+            if ($path[0]==="/") {
+                $path = substr($path, 1, strlen($path));
+            }
+        }
+
+        //$path = strtolower($this->config->projectDirectory())."/".$token."/".$path;
+
+        $path = strtolower($this->config->projectDirectory())."/".$path;
 
         //correct the path by override it
         $route->setPath($path);
