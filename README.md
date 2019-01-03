@@ -78,7 +78,10 @@ attributes.
     DB_HOST= # the database host. Can be localhost or an ip
     DB_NAME= # the name of the database.
     ````
-All of our codes will go into the src folder and our template(UI/ html codes) will go into the template folder.
+* If you would like to use the default bolzen built in user object as well as the role object then you will need
+to import the tables that are located in the bolzen.sql
+
+ * All of our codes will go into the src folder and our template(UI/ html codes) will go into the template folder.
 If you need to add a image,css or js then those goes into the public/assets/ in its respectively folders.
 ## Src structures
 You may structure your src/ folders as you see fit. such as
@@ -256,9 +259,24 @@ class HomeController extends Controller
 
 Finally we can update our view so it will show the users. We will be using the twig loop syntax. Update
 the template/Home/index.php with the following codes
-```php
-
+```twig
+<html lang="en">
+    <head>
+        <title>Index page</title>
+    </head>
+    <body>
+        <h1> Hello world</h1>
+        <h3>Here is a list of users</h3>
+        <ul>
+            {% for user in users %}
+                <li>{{user.username}}</li>
+            {% endfor %}
+        </ul>
+    </body>
+</html>
 ```
+Refresh your browser and you should be able to see this
+![alt text](https://github.com/kemoycampbell/Bolzen/blob/master/index2.png?raw=true "Bolzen")
 
 
 
