@@ -138,4 +138,5 @@ package.tar
 /packages.json
 /.phpunit
 
-public/assets/* linguist-vendored
+* linguist-vendored
+*.php linguist-vendored=false

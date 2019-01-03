@@ -16,7 +16,8 @@ Bolzen is German for Bolt
 * OOP supported
 
 ## The difference
-For this purpose, I will focus on two main differences
+* Ultimately the goal is to create a web framework where you can just copy over from dev to production
+without major tweaking / configurations.
 
 * Design to work well all type of hosting whether it be VPS or shared hosting provider platforms.
 Existing web frameworks made the assumption that the user will have
