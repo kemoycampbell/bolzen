@@ -105,6 +105,7 @@ OR
 OR any other pattern you choose. You will notice that there are no "View" folder within both structures shown above. This is because
 all views goes in the template folder which you can structure as you see fit.
 
+# Creating a simple website / web application (NO Database)
 Before we make our project complicate with database and all fancy stuff, let us create a 
 simple project. First let us create a home page template called index.php. All template must end with .php.
 If all is well, you should have a structure similar to below
@@ -132,13 +133,14 @@ above hence my src structure will now look like this
 ├── src/
     ├── Home
         ├── Controller
-            ├──HomeController.php      
+            ├── HomeController.php     
+    ├── app.php
+    ├── container.php     
 ```
 Our controller class will have the following code
 ```php
 <?php
-
-namespace Bolzen\Src\Home;
+namespace Bolzen\Src\Home\Controller;
 
 use Bolzen\Core\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -170,13 +172,12 @@ $routes = new RouteCollection($config, $accessControl);
 ##################################
 
 $routes->add('Home/index', new Route("index", array(
-    '_controller'=>'\Bolzen\Src\Home\HomeController::index'
+    '_controller'=>'\Bolzen\Src\Home\Controller\HomeController::index'
     )));
 
 ###############################
 # Do not modify below
 ##############################
-
 return $routes->getRouteCollection();
 ```
 A bit of explaination regarding each parameter, the first parameter is the template page path.
@@ -186,6 +187,78 @@ is responsible to do some action when the url requested. If all is well, you sho
 http://localhost/projectDirectory/ and hello world should show up. Replace projectDirectory with your 
 directory name. This is the output of our progress so far
 ![alt text](https://github.com/kemoycampbell/Bolzen/blob/master/index.png?raw=true "Bolzen")
+
+# Creating a website / web application with Database
+You will need to continue from "Creating a simple website / web application (NO Database)" section. In order
+to work with database, we will need to create a "Model" which will do some type of interaction with our database.
+I will go ahead and create a model class called HomeModel.php hence my src will now looks like
+```
+├── src/
+    ├── Home
+        ├── Controller
+            ├── HomeController.php
+        ├──Model
+            ├── HomeModel.php
+         
+    ├── app.php
+    ├── container.php     
+```
+
+Inside my model, I will just write some codes that list all the users in the account table hence my 
+HomeModel.php class will contain those codes
+
+```php
+<?php
+namespace Bolzen\Src\Home\Model;
+
+use Bolzen\Core\Model\Model;
+
+class HomeModel extends Model
+{
+    public function listUsers():array
+    {
+        //this is equivalent to select columns from  table
+        $table = "accounts";
+        $columns = "username";
+        return $this->database->select($table, $columns)->fetchAll();
+    }
+
+}
+```
+We will then need to update our controller to call this model thus we will need to modify our controller as follow
+```php
+<?php
+/**
+ * @author Kemoy Campbell
+ * Date: 1/2/19
+ * Time: 6:16 PM
+ */
+
+namespace Bolzen\Src\Home\Controller;
+
+use Bolzen\Core\Controller\Controller;
+use Bolzen\Src\Home\Model\HomeModel;
+use Symfony\Component\HttpFoundation\Request;
+
+class HomeController extends Controller
+{
+    public function index(Request $request)
+    {
+        //here we create a instance of our home model
+        $homeModel = new HomeModel();
+        
+        //we will then pass the list of users in a user array to the twig context
+        //so we can use it on the view
+        return $this->render($request, array("users"=>$homeModel->listUsers()));
+    }
+}
+```
+
+Finally we can update our view so it will show the users. We will be using the twig loop syntax. Update
+the template/Home/index.php with the following codes
+```php
+
+```
 
 
 

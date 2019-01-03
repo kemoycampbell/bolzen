@@ -12,13 +12,10 @@ $routes = new RouteCollection($config, $accessControl);
 ##################################
 
 $routes->add('Home/index', new Route("index", array(
-    '_controller'=>'\Bolzen\Src\Home\HomeController::index'
+    '_controller'=>'\Bolzen\Src\Home\Controller\HomeController::index'
     )));
 
 ###############################
 # Do not modify below
 ##############################
-
-//echo "<pre>".print_r($routes, true)."</pre>";
-
 return $routes->getRouteCollection();
