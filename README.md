@@ -18,13 +18,14 @@ Bolzen is German for Bolt
 ## The difference
 For this purpose, I will focus on two main differences
 
-* Design to work well with shared hosting provider platforms
+* Design to work well all type of hosting whether it be VPS or shared hosting provider platforms.
 Existing web frameworks made the assumption that the user will have
 access to the shell,virtualHost file and among other which result in 
 massive configurations need to get them to work. Bolzen is design to work
 right out of the box. Developers only need to set the configuration within
 the config/ folder such as directory path,scheme, host, environment. Thus
-eliminate the need for shell or virtualHost access
+eliminate the need for shell or virtualHost access.
+
 * Include project directory in the path
 Currently project directory are not include in the route paths by default
 in most web frameworks. Bolzen include the project directory that was supplied
@@ -292,13 +293,14 @@ Bolzen's vision and there are no conflict with the existence code bases.
 
 
 ## Current TODO:
-1. Document more usages
+* Document more usages
 
-2. Intensive security testings 
+* Intensive security testings 
 
-3. Add the whole core and code bases documentation
+* Add the whole core and code bases documentation
 
-4. Add composer support
+* Add composer support
+* Nginx configuration
 
 
 
