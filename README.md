@@ -81,10 +81,16 @@ attributes.
 * If you would like to use the default bolzen built in user object as well as the role object then you will need
 to import the tables that are located in the bolzen.sql
 
+* go to your url/projectDirectory/index and you should see a sample homepage
+
+Read below to see how the whole the sample home page was created.
+Feel free to delete the directory Home in both src and template and attempt to recreate it using
+the instructions below
+
+## The setup & structures
  * All of our codes will go into the src folder and our template(UI/ html codes) will go into the template folder.
 If you need to add a image,css or js then those goes into the public/assets/ in its respectively folders.
-## Src structures
-You may structure your src/ folders as you see fit. such as
+* You may structure your src/ folders as you see fit. such as
 ```
 ├── src/
     ├── Model
@@ -278,6 +284,19 @@ the template/Home/index.php with the following codes
 Refresh your browser and you should be able to see this
 ![alt text](https://github.com/kemoycampbell/Bolzen/blob/master/index2.png?raw=true "Bolzen")
 
+## Contribution
+contributions are welcome so feel free to submit a pull request. I will merge the change it if fits
+Bolzen's vision and there are no conflict with the existence code bases.
+
+
+## Current TODO:
+1. Document more usages
+
+2. Intensive security testings 
+
+3. Add the whole core and code bases documentation
+
+4. Add composer support
 
 
 
