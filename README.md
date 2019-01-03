@@ -52,9 +52,11 @@ it in the requests
             ├── Twig
             ├── User
         ├── public
-            ├── css
-            ├── images
-            ├── js
+            ├── assets
+                ├── css
+                ├── images
+                ├── js
+            ├── uploads #user uploads files are recommend to goes here
             ├── .htaccess
             ├── index.php
         ├── src
