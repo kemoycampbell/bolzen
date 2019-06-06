@@ -17,6 +17,7 @@ class HomeModel extends Model
         $table = "account";
         $columns = "username";
         return $this->database->select($table, $columns)->fetchAll();
+
     }
 
 }

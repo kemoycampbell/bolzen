@@ -81,7 +81,7 @@ interface DatabaseInterface
     public function beginTransaction():void;
 
     /**
-     * Set the database to autocommit and turn off transcation
+     * Set the database to autocommit and turn off transaction
      * @param bool $status true to enable autocommit. Default is false
      */
     public function setAutoCommit(bool $status = false):void;

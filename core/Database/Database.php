@@ -56,6 +56,7 @@ class Database implements DatabaseInterface
          * defined in the beginTransaction method
          */
         $this->beginTransaction();
+        $sql = htmlentities($sql, ENT_QUOTES, "UTF-8");
 
         /*
          * set up the statement using the prepare statement
@@ -213,7 +214,7 @@ class Database implements DatabaseInterface
     }
 
     /**
-     * Set the database to autocommit and turn off transcation
+     * Set the database to autocommit and turn off transaction
      * @param bool $status true to enable autocommit. Default is false
      */
     public function setAutoCommit(bool $status = false): void

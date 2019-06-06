@@ -93,6 +93,12 @@ interface ConfigInterface
      */
     public function getMaxLogFiles():int;
 
+    /**
+     * This function take the config xml variable and returns the value
+     * @param string $configName - the xml configuration variable name on whose value to get
+     * @return string - return the value associated with the xml variable
+     * @throws \InvalidArgumentException if we are not able to located the xml variable
+     */
     public function getXmlConfigValue(string $configName):string;
 
     public function isXmlConfigurationRequired():bool;

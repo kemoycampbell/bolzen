@@ -20,7 +20,7 @@ class AccessControl implements AccessControlInterface
     private $database;
     private $userRolesTable;
     private $roleTable;
-    private $maxOpenSSlRandomPseudocodeByteLength;
+    private $maxOpenSSlRandomPseudoCodeByteLength;
     private $config;
 
     private $agent;
@@ -38,24 +38,32 @@ class AccessControl implements AccessControlInterface
         $this->config = $config;
         $this->userRolesTable = "accountRoles";
         $this->roleTable = "roles";
-        $this->maxOpenSSlRandomPseudocodeByteLength = 10;
-        $this->ip = null;
-        $this->agent = null;
+        $this->maxOpenSSlRandomPseudoCodeByteLength = 10;
     }
 
     /**
-     * This function authenticate a user's account
+     * This function authenticates a user's account
      * @param string $username the username to authenticate
-     * @param string $password the password to authenticate
+     * @param string $password the user's account password
+     * @param bool $createSession - true to create a authenticated session, false otherwise
      * @return bool return true if successful. False otherwise
      */
     public function authenticate(string $username, string $password, bool $createSession = false): bool
     {
+        $username = trim($username);
+        $password = trim($password);
+
+        if (empty($username) || empty($password)) {
+            return false;
+        }
+
         $password = hash($this->user->hashAlgorithm(), $password);
         $columns = "username";
         $where = "username = ? AND password = ?";
         $bindings = array($username, $password);
-        if (count($this->user->getUsers($columns, $where, $bindings))<=0) {
+
+        //locating the user's account
+        if (empty($this->user->getUsers($columns, $where, $bindings))) {
             return false;
         }
 
@@ -91,7 +99,7 @@ class AccessControl implements AccessControlInterface
      */
     public function generateRandomToken(): string
     {
-        return bin2hex(openssl_random_pseudo_bytes($this->maxOpenSSlRandomPseudocodeByteLength));
+        return bin2hex(openssl_random_pseudo_bytes($this->maxOpenSSlRandomPseudoCodeByteLength) );
     }
 
     /**
@@ -125,7 +133,7 @@ class AccessControl implements AccessControlInterface
         $path = implode("/", array_filter(explode("/", $path)));
 
         $location = $this->config->getBaseUrl().$path;
-        header("Location:".$location);
+        header("Location:$location");
         exit;
     }
 
@@ -137,6 +145,8 @@ class AccessControl implements AccessControlInterface
      */
     public function hasRole(string $role, string $username = ""): bool
     {
+        $role = trim($role);
+        $username = trim($username);
         $roles = $this->user->getRoles($username);
 
 
@@ -158,6 +168,7 @@ class AccessControl implements AccessControlInterface
      */
     public function hasRoles(array $roles, string $username = ""): bool
     {
+        $username = trim($username);
         $currentUserRoles = $this->user->getRoles($username);
 
         if (empty($currentUserRoles) || empty($roles)) {
@@ -166,7 +177,7 @@ class AccessControl implements AccessControlInterface
 
         $currentUserRoles = array_column($currentUserRoles, "roles");
 
-        return count(array_diff($roles, $currentUserRoles)) > 0;
+        return !empty(array_diff($roles, $currentUserRoles));
     }
 
     /**
@@ -176,6 +187,8 @@ class AccessControl implements AccessControlInterface
      */
     public function isValidSession(string $token): bool
     {
+        $token = trim($token);
+
         if (empty($token)) {
             return false;
         }
@@ -222,6 +235,8 @@ class AccessControl implements AccessControlInterface
      */
     public function getRoleID(string $role): string
     {
+        $role = trim($role);
+
         //save the database a trip
         if (empty($role)) {
             return "";
@@ -232,11 +247,8 @@ class AccessControl implements AccessControlInterface
         $columns = "roleId";
         $data = $this->database->select($this->roleTable, $columns, $where, $bindings);
 
-        if ($data->rowCount() > 0) {
-            return $data->fetch()["roleId"];
-        }
+        return $data->rowCount() > 0 ? $data->fetch()[$columns] : "";
 
-        return "";
     }
 
     /**
@@ -247,6 +259,9 @@ class AccessControl implements AccessControlInterface
      */
     public function assignRole(string $username, string $role): bool
     {
+        $username = trim($username);
+        $role = trim($role);
+
         if (empty($username) || empty($role)) {
             return false;
         }
@@ -277,6 +292,9 @@ class AccessControl implements AccessControlInterface
      */
     public function stripRole(string $username, string $role): bool
     {
+        $username = trim($username);
+        $role = trim($role);
+
         if (empty($username) || empty($role)) {
             return false;
         }

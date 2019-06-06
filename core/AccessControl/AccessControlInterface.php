@@ -9,10 +9,12 @@ namespace Bolzen\Core\AccessControl;
 
 interface AccessControlInterface
 {
+
     /**
-     * This function authenticate a user's account
+     * This function authenticates a user's account
      * @param string $username the username to authenticate
-     * @param string $password the password to authenticate
+     * @param string $password the user's account password
+     * @param bool $createSession - true to create a authenticated session, false otherwise
      * @return bool return true if successful. False otherwise
      */
     public function authenticate(string $username, string $password, bool $createSession = false):bool;

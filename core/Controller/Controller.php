@@ -40,7 +40,7 @@ class Controller
      * @param string $baseUrl store the url
      * @return string url
      */
-    public function setBaseUrl(string $baseUrl)
+    public function setBaseUrl(string $baseUrl):string
     {
         return $baseUrl;
     }
@@ -67,6 +67,11 @@ class Controller
         return $response;
     }
 
+    /**
+     * This method takes an array and return an JSON Response
+     * @param array $data - the data to convert into json
+     * @return Response - JSON response format
+     */
     public function jsonResponse(array $data)
     {
         return new Response(json_encode($data));

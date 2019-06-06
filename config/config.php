@@ -10,8 +10,8 @@ return array(
     ######################################
     # support xml configuration variables
     ######################################
-    'useXmlConfigurationVariable'=>true,
-    'xmlPath'=>'/home/w-ntidtutor/configvars.xml',
+    'useXmlConfigurationVariable'=>false,
+    'xmlPath'=>'',
 
     ##############################################
     # If the developer decided to enable
@@ -26,8 +26,8 @@ return array(
     "xmlDatabase"=>array(
         'DB_PREFIX'=>"",
         'DB_USER'=>"",
-        'DB_PASS'=>"dbPass_w_ntidtutor",
-        'DB_HOST'=>"dbHost_w_ntidtutor",
+        'DB_PASS'=>"",
+        'DB_HOST'=>"",
         'DB_NAME'=>"",
     ),
 
@@ -35,9 +35,9 @@ return array(
     # APPLICATION HOSTING ENVIRONMENT #
     ###################################
     'dev'=>array(
-        'directory'=>'ntid/tutoring',
-        'scheme'=>'https',
-        'host'=>'www-staging.rit.edu'
+        'directory'=>'bolzen',
+        'scheme'=>'http',
+        'host'=>'localhost'
 
     ),
     'stage'=>array(
@@ -47,9 +47,9 @@ return array(
 
     ),
     'prod'=>array(
-        'directory'=>'ntid/tutoring',
-        'scheme'=>'https',
-        'host'=>'www.rit.edu'
+        'directory'=>'',
+        'scheme'=>'',
+        'host'=>''
 
     ),
 );
