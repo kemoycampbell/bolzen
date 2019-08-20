@@ -295,11 +295,6 @@ Bolzen's vision and there are no conflict with the existence code bases.
 
 ## Current TODO:
 * Document more usages
-
-* Intensive security testings 
-
-* Add the whole core and code bases documentation
-
 * Add composer support
 * Nginx configuration
 
