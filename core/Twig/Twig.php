@@ -46,6 +46,7 @@ class Twig
         $this->addUrlFunction();
         $this->addGetTokenFunction();
         $this->addHtmlDecodeFunction();
+        $this->isAnonymousFunction();
         $this->registerSession();
     }
 
@@ -62,6 +63,13 @@ class Twig
             $absolute = $this->config->getBaseUrl().$file;
 
             return $absolute;
+        }));
+    }
+
+    public function isAnonymousFunction()
+    {
+        $this->twig->addFunction(new \Twig_SimpleFunction('isAnonymous', function () {
+            return $this->accessControl->hasRole('anonymous');
         }));
     }
 

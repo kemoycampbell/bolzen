@@ -11,9 +11,14 @@ $routes = new RouteCollection($config, $accessControl);
 # Your Routes goes here
 ##################################
 
-$routes->add('Home/index', new Route("index", array(
+//$routes->add('Home/index', new Route("index", array(
+//    '_controller'=>'\Bolzen\Src\Home\Controller\HomeController::index'
+//    )));
+
+//home index path
+$routes->add('Home/index', new Route("index",array(
     '_controller'=>'\Bolzen\Src\Home\Controller\HomeController::index'
-    )));
+)));
 
 ###############################
 # Do not modify below

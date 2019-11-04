@@ -126,6 +126,7 @@ Temporary Items
 # Do not include the environment variables
 .env.bolzen
 .env
+.env*
 
 .git*
 .git/*

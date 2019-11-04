@@ -56,7 +56,9 @@ class Database implements DatabaseInterface
          * defined in the beginTransaction method
          */
         $this->beginTransaction();
-        $sql = htmlentities($sql, ENT_QUOTES, "UTF-8");
+        //$sql = htmlentities($sql, ENT_QUOTES, "UTF-8");
+
+
 
         /*
          * set up the statement using the prepare statement

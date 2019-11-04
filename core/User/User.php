@@ -84,6 +84,11 @@ class User implements UserInterface
         $columns = "username,password,verified";
         $password = hash($this->hashAlgorithm, $password);
 
+        //fix the bug that when parameter is set to false nothing is assigned to the $verified variable
+        if (!$verified) {
+            $verified = 0;
+        }
+
         $bindings = array($username, $password, $verified);
 
         return $this->database->insert($this->accountTable, $columns, $bindings);

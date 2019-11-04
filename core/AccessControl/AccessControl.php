@@ -147,9 +147,14 @@ class AccessControl implements AccessControlInterface
     {
         $role = trim($role);
         $username = trim($username);
+
+        //make an exception so we can support whether a role has anonymous
+        if (empty($username) && $role==="anonymous") {
+            return $this->user->isAnonymous();
+        }
+
+        //otherwise we check to see if the user has the targeted role
         $roles = $this->user->getRoles($username);
-
-
         if (empty($role) || empty($roles)) {
             return false;
         }

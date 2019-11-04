@@ -37,9 +37,6 @@ class Config implements ConfigInterface
 
     public function __construct()
     {
-        $dotEnv = new Dotenv();
-        $dotEnv->load(__DIR__.'/../../config/.env');
-
         $this->loadConfig();
         $this->loadXmlConfigurationIfNeed();
         $this->loadDatabaseParametersIfNeed();
@@ -158,6 +155,10 @@ class Config implements ConfigInterface
     private function loadDatabaseParametersIfNeed():void
     {
         if (!$this->databaseParametersLoaded && $this->isDatabaseRequired()) {
+
+            $dotEnv = new Dotenv();
+            $dotEnv->load(__DIR__.'/../../config/.env');
+
             //ensure we have the database parameters
             $this->databaseNameValidation();
             $this->databaseHostValidation();
@@ -424,9 +425,8 @@ class Config implements ConfigInterface
      */
     public function databaseDsn(): string
     {
-        //$dsn = 'mysql:host=localhost;dbname=testdb';
-        return $this->databasePrefix().":host=".$this->databaseHost().";dbname=".$this->databaseName().";
-        charset=utf8mb4";
+        return $this->databasePrefix().":host=".$this->databaseHost().";dbname=".$this->databaseName().
+            ";charset=utf8mb4";
     }
 
     /**
