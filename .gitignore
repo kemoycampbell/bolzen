@@ -141,7 +141,3 @@ package.tar
 
 * linguist-vendored
 *.php linguist-vendored=false
-
-# Do not add the examples do users can develops it themselves
-src/Home*
-template/Home*
