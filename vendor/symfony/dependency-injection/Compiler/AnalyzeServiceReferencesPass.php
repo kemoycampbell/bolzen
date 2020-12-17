@@ -12,6 +12,7 @@
 namespace Symfony\Component\DependencyInjection\Compiler;
 
 use Symfony\Component\DependencyInjection\Argument\ArgumentInterface;
+use Symfony\Component\DependencyInjection\Argument\IteratorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Definition;
@@ -27,15 +28,15 @@ use Symfony\Component\DependencyInjection\Reference;
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class AnalyzeServiceReferencesPass extends AbstractRecursivePass implements RepeatablePassInterface
+class AnalyzeServiceReferencesPass extends AbstractRecursivePass
 {
     private $graph;
     private $currentDefinition;
     private $onlyConstructorArguments;
     private $hasProxyDumper;
     private $lazy;
-    private $expressionLanguage;
     private $byConstructor;
+    private $byFactory;
     private $definitions;
     private $aliases;
 
@@ -50,14 +51,6 @@ class AnalyzeServiceReferencesPass extends AbstractRecursivePass implements Repe
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function setRepeatedPass(RepeatedPass $repeatedPass)
-    {
-        @trigger_error(sprintf('The "%s()" method is deprecated since Symfony 4.2.', __METHOD__), E_USER_DEPRECATED);
-    }
-
-    /**
      * Processes a ContainerBuilder object to populate the service reference graph.
      */
     public function process(ContainerBuilder $container)
@@ -67,6 +60,7 @@ class AnalyzeServiceReferencesPass extends AbstractRecursivePass implements Repe
         $this->graph->clear();
         $this->lazy = false;
         $this->byConstructor = false;
+        $this->byFactory = false;
         $this->definitions = $container->getDefinitions();
         $this->aliases = $container->getAliases();
 
@@ -78,17 +72,17 @@ class AnalyzeServiceReferencesPass extends AbstractRecursivePass implements Repe
         try {
             parent::process($container);
         } finally {
-            $this->aliases = $this->definitions = array();
+            $this->aliases = $this->definitions = [];
         }
     }
 
-    protected function processValue($value, $isRoot = false)
+    protected function processValue($value, bool $isRoot = false)
     {
         $lazy = $this->lazy;
         $inExpression = $this->inExpression();
 
         if ($value instanceof ArgumentInterface) {
-            $this->lazy = true;
+            $this->lazy = !$this->byFactory || !$value instanceof IteratorArgument;
             parent::processValue($value->getValues());
             $this->lazy = $lazy;
 
@@ -137,14 +131,48 @@ class AnalyzeServiceReferencesPass extends AbstractRecursivePass implements Repe
         $this->lazy = false;
 
         $byConstructor = $this->byConstructor;
-        $this->byConstructor = true;
+        $this->byConstructor = $isRoot || $byConstructor;
+
+        $byFactory = $this->byFactory;
+        $this->byFactory = true;
         $this->processValue($value->getFactory());
+        $this->byFactory = $byFactory;
         $this->processValue($value->getArguments());
+
+        $properties = $value->getProperties();
+        $setters = $value->getMethodCalls();
+
+        // Any references before a "wither" are part of the constructor-instantiation graph
+        $lastWitherIndex = null;
+        foreach ($setters as $k => $call) {
+            if ($call[2] ?? false) {
+                $lastWitherIndex = $k;
+            }
+        }
+
+        if (null !== $lastWitherIndex) {
+            $this->processValue($properties);
+            $setters = $properties = [];
+
+            foreach ($value->getMethodCalls() as $k => $call) {
+                if (null === $lastWitherIndex) {
+                    $setters[] = $call;
+                    continue;
+                }
+
+                if ($lastWitherIndex === $k) {
+                    $lastWitherIndex = null;
+                }
+
+                $this->processValue($call);
+            }
+        }
+
         $this->byConstructor = $byConstructor;
 
         if (!$this->onlyConstructorArguments) {
-            $this->processValue($value->getProperties());
-            $this->processValue($value->getMethodCalls());
+            $this->processValue($properties);
+            $this->processValue($setters);
             $this->processValue($value->getConfigurator());
         }
         $this->lazy = $lazy;

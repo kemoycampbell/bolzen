@@ -7,6 +7,8 @@
 
 namespace Bolzen\Core\Config;
 
+use InvalidArgumentException;
+
 interface ConfigInterface
 {
     /**
@@ -14,6 +16,22 @@ interface ConfigInterface
      * @return string the current environment of the application
      */
     public function environment():string;
+
+    /**
+     * @return bool
+     */
+    public function isEnvironmentDevelopment():bool;
+
+    /**
+     * @return bool
+     */
+    public function isEnvironmentStaging():bool;
+
+    /**
+     * @return bool
+     */
+    public function isEnvironmentProduction():bool;
+
 
     /**
      * This function returns the current scheme that the app is running on
@@ -97,7 +115,7 @@ interface ConfigInterface
      * This function take the config xml variable and returns the value
      * @param string $configName - the xml configuration variable name on whose value to get
      * @return string - return the value associated with the xml variable
-     * @throws \InvalidArgumentException if we are not able to located the xml variable
+     * @throws InvalidArgumentException if we are not able to located the xml variable
      */
     public function getXmlConfigValue(string $configName):string;
 

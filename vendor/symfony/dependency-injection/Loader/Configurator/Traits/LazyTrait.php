@@ -20,11 +20,11 @@ trait LazyTrait
      *
      * @return $this
      */
-    final public function lazy($lazy = true)
+    final public function lazy($lazy = true): self
     {
         $this->definition->setLazy((bool) $lazy);
         if (\is_string($lazy)) {
-            $this->definition->addTag('proxy', array('interface' => $lazy));
+            $this->definition->addTag('proxy', ['interface' => $lazy]);
         }
 
         return $this;

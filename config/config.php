@@ -41,8 +41,8 @@ return array(
 
     ),
     'stage'=>array(
-        'directory'=>'huston',
-        'scheme'=>'https',
+        'directory'=>'school',
+        'scheme'=>'http',
         'host'=>'localhost'
 
     ),

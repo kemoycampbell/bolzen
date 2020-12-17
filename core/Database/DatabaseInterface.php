@@ -7,21 +7,24 @@
 
 namespace Bolzen\Core\Database;
 
+use PDO;
+use PDOStatement;
+
 interface DatabaseInterface
 {
     /**
      * Take a given sql and execute the statement
      * @param string $sql the given sql statement to execute
      * @param array $bindings the associate bindings if any. This must be in the same order as the sql placeholders
-     * @return \PDOStatement returns a PDOStatement object after the sql has been executed
+     * @return PDOStatement returns a PDOStatement object after the sql has been executed
      */
-    public function genericSqlBuilder(string $sql, array $bindings = array()):\PDOStatement;
+    public function genericSqlBuilder(string $sql, array $bindings = array()): PDOStatement;
 
     /**
      * Returns the PDO instance of the database
-     * @return \PDO the PDO instance of the database
+     * @return PDO the PDO instance of the database
      */
-    public function getPDO():\PDO;
+    public function getPDO(): PDO;
 
     /**
      * Perform a select statement on a given table based on the values supplied
@@ -29,9 +32,9 @@ interface DatabaseInterface
      * @param string $columns the columns to select
      * @param string $where the where clause example "id=?"
      * @param array $bindings the bindings for the where clause(s)
-     * @return \PDOStatement return a PDOStatement after the sql has been executed
+     * @return PDOStatement return a PDOStatement after the sql has been executed
      */
-    public function select(string $table, string $columns, string $where = "", array $bindings = array()):\PDOStatement;
+    public function select(string $table, string $columns, string $where = "", array $bindings = array()): PDOStatement;
 
     /**
      * Perform an insert sql statement

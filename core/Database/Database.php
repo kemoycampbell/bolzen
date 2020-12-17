@@ -8,6 +8,8 @@
 namespace Bolzen\Core\Database;
 
 use Bolzen\Core\Config\ConfigInterface;
+use PDO;
+use PDOStatement;
 
 class Database implements DatabaseInterface
 {
@@ -30,14 +32,14 @@ class Database implements DatabaseInterface
 
     private function connect()
     {
-        $conn = new \PDO(
+        $conn = new PDO(
             $this->config->databaseDsn(),
             $this->config->databaseUser(),
             $this->config->databasePassword()
         );
 
-        $conn->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $conn->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
+        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 
         return $conn;
     }
@@ -46,9 +48,9 @@ class Database implements DatabaseInterface
      * Take a given sql and execute the statement
      * @param string $sql the given sql statement to execute
      * @param array $bindings the associate bindings if any. This must be in the same order as the sql placeholders
-     * @return \PDOStatement returns a PDOStatement object after the sql has been executed
+     * @return PDOStatement returns a PDOStatement object after the sql has been executed
      */
-    public function genericSqlBuilder(string $sql, array $bindings = array()): \PDOStatement
+    public function genericSqlBuilder(string $sql, array $bindings = array()): PDOStatement
     {
         /*
          * The transaction is only started if autocommit is not set to true
@@ -72,9 +74,9 @@ class Database implements DatabaseInterface
 
     /**
      * Returns the PDO instance of the database
-     * @return \PDO the PDO instance of the database
+     * @return PDO the PDO instance of the database
      */
-    public function getPDO(): \PDO
+    public function getPDO(): PDO
     {
         return $this->pdo;
     }
@@ -85,9 +87,9 @@ class Database implements DatabaseInterface
      * @param string $columns the columns to select
      * @param string $where the where clause example "id=?"
      * @param array $bindings the bindings for the where clause(s)
-     * @return \PDOStatement return a PDOStatement after the sql has been executed
+     * @return PDOStatement return a PDOStatement after the sql has been executed
      */
-    public function select(string $table, string $columns, string $where = "", array $bindings = array()): \PDOStatement
+    public function select(string $table, string $columns, string $where = "", array $bindings = array()): PDOStatement
     {
         $sql = "SELECT $columns FROM $table ";
 

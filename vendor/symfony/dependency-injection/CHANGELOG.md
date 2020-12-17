@@ -1,6 +1,79 @@
 CHANGELOG
 =========
 
+5.2.0
+-----
+
+ * added `param()` and `abstract_arg()` in the PHP-DSL
+ * deprecated `Definition::setPrivate()` and `Alias::setPrivate()`, use `setPublic()` instead
+ * added support for the `#[Required]` attribute
+
+5.1.0
+-----
+
+ * deprecated `inline()` in favor of `inline_service()` and `ref()` in favor of `service()` when using the PHP-DSL
+ * allow decorators to reference their decorated service using the special `.inner` id
+ * added support to autowire public typed properties in php 7.4
+ * added support for defining method calls, a configurator, and property setters in `InlineServiceConfigurator`
+ * added possibility to define abstract service arguments
+ * allowed mixing "parent" and instanceof-conditionals/defaults/bindings
+ * updated the signature of method `Definition::setDeprecated()` to `Definition::setDeprecation(string $package, string $version, string $message)`
+ * updated the signature of method `Alias::setDeprecated()` to `Alias::setDeprecation(string $package, string $version, string $message)`
+ * updated the signature of method `DeprecateTrait::deprecate()` to `DeprecateTrait::deprecation(string $package, string $version, string $message)`
+ * deprecated the `Psr\Container\ContainerInterface` and `Symfony\Component\DependencyInjection\ContainerInterface` aliases of the `service_container` service,
+   configure them explicitly instead
+ * added class `Symfony\Component\DependencyInjection\Dumper\Preloader` to help with preloading on PHP 7.4+
+ * added tags `container.preload`/`.no_preload` to declare extra classes to preload/services to not preload
+ * allowed loading and dumping tags with an attribute named "name"
+ * deprecated `Definition::getDeprecationMessage()`, use `Definition::getDeprecation()` instead
+ * deprecated `Alias::getDeprecationMessage()`, use `Alias::getDeprecation()` instead
+ * added support of PHP8 static return type for withers
+ * added `AliasDeprecatedPublicServicesPass` to deprecate public services to private
+
+5.0.0
+-----
+
+ * removed support for auto-discovered extension configuration class which does not implement `ConfigurationInterface`
+ * removed support for non-string default env() parameters
+ * moved `ServiceSubscriberInterface` to the `Symfony\Contracts\Service` namespace
+ * removed `RepeatedPass` and `RepeatablePassInterface`
+ * removed support for short factory/configurator syntax from `YamlFileLoader`
+ * removed `ResettableContainerInterface`, use `ResetInterface` instead
+ * added argument `$returnsClone` to `Definition::addMethodCall()`
+ * removed `tagged`, use `tagged_iterator` instead
+
+4.4.0
+-----
+
+ * added `CheckTypeDeclarationsPass` to check injected parameters type during compilation
+ * added support for opcache.preload by generating a preloading script in the cache folder
+ * added support for dumping the container in one file instead of many files
+ * deprecated support for short factories and short configurators in Yaml
+ * added `tagged_iterator` alias for `tagged` which might be deprecated in a future version
+ * deprecated passing an instance of `Symfony\Component\DependencyInjection\Parameter` as class name to `Symfony\Component\DependencyInjection\Definition`
+ * added support for binding iterable and tagged services
+ * made singly-implemented interfaces detection be scoped by file
+ * added ability to define a static priority method for tagged service
+ * added support for improved syntax to define method calls in Yaml
+ * made the `%env(base64:...)%` processor able to decode base64url
+ * added ability to choose behavior of decorations on non existent decorated services
+
+4.3.0
+-----
+
+ * added `%env(trim:...)%` processor to trim a string value
+ * added `%env(default:param_name:...)%` processor to fallback to a parameter or to null when using `%env(default::...)%`
+ * added `%env(url:...)%` processor to convert an URL or DNS into an array of components
+ * added `%env(query_string:...)%` processor to convert a query string into an array of key values
+ * added support for deprecating aliases
+ * made `ContainerParametersResource` final and not implement `Serializable` anymore
+ * added `ReverseContainer`: a container that turns services back to their ids
+ * added ability to define an index for a tagged collection
+ * added ability to define an index for services in an injected service locator argument
+ * made `ServiceLocator` implement `ServiceProviderInterface`
+ * deprecated support for non-string default env() parameters
+ * added `%env(require:...)%` processor to `require()` a PHP file and use the value returned from it
+
 4.2.0
 -----
 
