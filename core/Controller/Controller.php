@@ -13,7 +13,11 @@ use Bolzen\Core\Config\ConfigInterface;
 use phpDocumentor\Reflection\Types\This;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Twig\Environment;
 use Twig_Environment;
+use Twig_Error_Loader;
+use Twig_Error_Runtime;
+use Twig_Error_Syntax;
 
 class Controller
 {
@@ -28,10 +32,10 @@ class Controller
     }
 
     /**
-     * @param Twig_Environment $twig set the environment in twig
-     * @return Twig_Environment
+     * @param Environment $twig set the environment in twig
+     * @return Environment
      */
-    private function setTwig(Twig_Environment $twig)
+    private function setTwig(Environment $twig)
     {
         return $twig;
     }
@@ -45,13 +49,15 @@ class Controller
         return $baseUrl;
     }
 
+
+
     /**
      * @param Request $request an object for file and context
      * @param array $context a list of array for context
      * @return Response
-     * @throws \Twig_Error_Loader
-     * @throws \Twig_Error_Runtime
-     * @throws \Twig_Error_Syntax
+     * @throws \Twig\Error\LoaderError
+     * @throws \Twig\Error\RuntimeError
+     * @throws \Twig\Error\SyntaxError
      */
     public function render(Request $request, array $context = array())
     {

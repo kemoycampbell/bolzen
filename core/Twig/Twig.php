@@ -11,6 +11,9 @@ namespace Bolzen\Core\Twig;
 use Bolzen\Core\AccessControl\AccessControlInterface;
 use Bolzen\Core\Config\ConfigInterface;
 use Bolzen\Core\Session\SessionInterface;
+use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
+use Twig\TwigFunction;
 
 /**
  * Class Twig - provides many built-in features and methods for the php
@@ -35,8 +38,8 @@ class Twig
         $this->session = $session;
 
         $this->templatePath = __DIR__.'/../../template/';
-        $this->loader = new \Twig_Loader_Filesystem($this->templatePath);
-        $this->twig = new \Twig_Environment($this->loader);
+        $this->loader = new FilesystemLoader($this->templatePath);
+        $this->twig = new Environment($this->loader);
 
         //add the functions that we want twig to have access to so we can
         //access them from the twig templates
@@ -56,19 +59,17 @@ class Twig
      */
     private function addAssetsFunction()
     {
-        $this->twig->addFunction(new \Twig_SimpleFunction('asset', function ($asset) {
+        $this->twig->addFunction(new TwigFunction('asset', function ($asset) {
 
             $file = sprintf('assets/%s', ltrim($asset, '/'));
 
-            $absolute = $this->config->getBaseUrl().$file;
-
-            return $absolute;
+            return $this->config->getBaseUrl().$file;
         }));
     }
 
     public function isAnonymousFunction()
     {
-        $this->twig->addFunction(new \Twig_SimpleFunction('isAnonymous', function () {
+        $this->twig->addFunction(new TwigFunction('isAnonymous', function () {
             return $this->accessControl->hasRole('anonymous');
         }));
     }
@@ -79,7 +80,7 @@ class Twig
      */
     private function addUploadFunction()
     {
-        $this->twig->addFunction(new \Twig_SimpleFunction('upload', function ($path) {
+        $this->twig->addFunction(new TwigFunction('upload', function ($path) {
 
             $file = sprintf('uploads/%s', ltrim($path, '/'));
             $absolute = $this->config->getBaseUrl().$file;
@@ -92,8 +93,8 @@ class Twig
      */
     private function addHasRoleFunction()
     {
-        $this->twig->addFunction(new \Twig_SimpleFunction('hasRole', function ($role, $user = "") {
-            return $this->accessControl->hasRole($role, $user);
+        $this->twig->addFunction(new TwigFunction('hasRole', function ($role) {
+            return $this->accessControl->hasRole($role);
         }));
     }
 
@@ -102,7 +103,7 @@ class Twig
      */
     private function addUrlFunction()
     {
-        $this->twig->addFunction(new \Twig_SimpleFunction('url', function ($path) {
+        $this->twig->addFunction(new TwigFunction('url', function ($path) {
 
             $path = implode("/", array_filter(explode("/", $path)));
             return $this->config->getBaseUrl().$path;
@@ -114,7 +115,7 @@ class Twig
      */
     private function addGetTokenFunction()
     {
-        $this->twig->addFunction(new \Twig_SimpleFunction('getToken', function () {
+        $this->twig->addFunction(new TwigFunction('getToken', function () {
             return $this->accessControl->getCSRFToken();
         }));
     }
@@ -125,7 +126,7 @@ class Twig
      */
     public function addHtmlDecodeFunction()
     {
-        $this->twig->addFunction(new \Twig_SimpleFunction('html_decode', function ($code) {
+        $this->twig->addFunction(new TwigFunction('html_decode', function ($code) {
             echo html_entity_decode($code);
         }));
     }
@@ -137,7 +138,7 @@ class Twig
 
     /**
      * Return the twig environment instance
-     * @return \Twig_Environment twig environment instance
+     * @return Environment twig environment instance
      */
     public function getTwig()
     {
@@ -146,7 +147,7 @@ class Twig
 
     /**
      * Return twig loader file system
-     * @return \Twig_Loader_Filesystem twig loader file system instance
+     * @return FilesystemLoader twig loader file system instance
      */
     public function getLoader()
     {

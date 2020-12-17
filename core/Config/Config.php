@@ -7,7 +7,7 @@
 
 namespace Bolzen\Core\Config;
 
-use http\Exception\InvalidArgumentException;
+
 use Symfony\Component\Dotenv\Dotenv;
 
 class Config implements ConfigInterface
@@ -27,6 +27,10 @@ class Config implements ConfigInterface
     private const XML_ENABLED = "useXmlConfigurationVariable";
     private const XML_PATH = "xmlPath";
     private const XML_DATABASE = "xmlDatabase";
+    private const ENV_PATH = __DIR__.'/../../config/.env';
+    private const DEV_ENVIRONMENT = 'dev';
+    private const STAGING_ENVIRONMENT = 'stage';
+    private const PRODUCTION_ENVIRONMENT = 'prod';
 
     private $environment;
     private $config;
@@ -37,10 +41,13 @@ class Config implements ConfigInterface
 
     public function __construct()
     {
+        $this->loadEnv();
         $this->loadConfig();
         $this->loadXmlConfigurationIfNeed();
         $this->loadDatabaseParametersIfNeed();
     }
+
+
 
     public function isXmlConfigurationRequired():bool
     {
@@ -155,10 +162,6 @@ class Config implements ConfigInterface
     private function loadDatabaseParametersIfNeed():void
     {
         if (!$this->databaseParametersLoaded && $this->isDatabaseRequired()) {
-
-            $dotEnv = new Dotenv();
-            $dotEnv->load(__DIR__.'/../../config/.env');
-
             //ensure we have the database parameters
             $this->databaseNameValidation();
             $this->databaseHostValidation();
@@ -177,6 +180,17 @@ class Config implements ConfigInterface
     public function environment(): string
     {
         return $this->environment;
+    }
+
+    /**
+     * This function checkes if an .env exist and load it
+     */
+    private function loadEnv():void
+    {
+        if (file_exists(self::ENV_PATH)) {
+            $dotEnv = new Dotenv();
+            $dotEnv->load(self::ENV_PATH);
+        }
     }
 
     private function loadConfig():void
@@ -306,7 +320,7 @@ class Config implements ConfigInterface
     {
         if ($this->isXmlConfigurationRequired()) {
             $this->validateXML_DATABASEParameter(self::DATABASE_PREFIX);
-        } elseif (empty(getenv(self::DATABASE_PREFIX))) {
+        } elseif (empty($_ENV[self::DATABASE_PREFIX])) {
             throw new \InvalidArgumentException(self::DATABASE_PREFIX. " cannot be empty");
         }
     }
@@ -318,7 +332,7 @@ class Config implements ConfigInterface
     {
         if ($this->isXmlConfigurationRequired()) {
             $this->validateXML_DATABASEParameter(self::DATABASE_NAME);
-        } elseif (empty(getenv(self::DATABASE_NAME))) {
+        } elseif (empty($_ENV[self::DATABASE_NAME])) {
             throw new \InvalidArgumentException(self::DATABASE_NAME. " cannot be empty");
         }
     }
@@ -330,7 +344,7 @@ class Config implements ConfigInterface
     {
         if ($this->isXmlConfigurationRequired()) {
             $this->validateXML_DATABASEParameter(self::DATABASE_USER);
-        } elseif (empty(getenv(self::DATABASE_USER))) {
+        } elseif (empty($_ENV[self::DATABASE_USER])) {
             throw new \InvalidArgumentException(self::DATABASE_USER." cannot be empty");
         }
     }
@@ -340,10 +354,10 @@ class Config implements ConfigInterface
      */
     private function databasePasswordValidation():void
     {
-        if ($this->environment !=="dev") {
+        if ($this->environment !=="dev" && !$this->environment===self::STAGING_ENVIRONMENT) {
             if ($this->isXmlConfigurationRequired()) {
                 $this->validateXML_DATABASEParameter(self::DATABASE_PASSWORD);
-            } elseif (empty(getenv(self::DATABASE_PASSWORD))) {
+            } elseif (empty($_ENV[self::DATABASE_PASSWORD])) {
                 throw new \InvalidArgumentException(self::DATABASE_PASSWORD. " cannot be empty");
             }
         }
@@ -357,7 +371,7 @@ class Config implements ConfigInterface
 
         if ($this->isXmlConfigurationRequired()) {
             $this->validateXML_DATABASEParameter(self::DATABASE_HOST);
-        } elseif (empty(getenv(self::DATABASE_HOST))) {
+        } elseif (empty($_ENV[self::DATABASE_HOST])) {
             throw new \InvalidArgumentException(self::DATABASE_HOST." cannot be empty");
         }
     }
@@ -416,7 +430,7 @@ class Config implements ConfigInterface
         $key = self::DATABASE_NAME;
         $value = $this->getXML_DATABASEParameterValue($key);
 
-        return $value!==null ? $value : getenv($key);
+        return $value!==null ? $value : $_ENV[$key];
     }
 
     /**
@@ -438,7 +452,7 @@ class Config implements ConfigInterface
         $key = self::DATABASE_PASSWORD;
         $value = $this->getXML_DATABASEParameterValue($key);
 
-        return $value!==null ? $value : getenv($key);
+        return $value!==null ? $value : $_ENV[$key];
     }
 
     /**
@@ -450,7 +464,7 @@ class Config implements ConfigInterface
         $key = self::DATABASE_USER;
         $value = $this->getXML_DATABASEParameterValue($key);
 
-        return $value!==null ? $value : getenv($key);
+        return $value!==null ? $value : $_ENV[$key];
     }
 
     /**
@@ -462,7 +476,7 @@ class Config implements ConfigInterface
         $key = self::DATABASE_PREFIX;
         $value = $this->getXML_DATABASEParameterValue($key);
 
-        return $value!==null ? $value : getenv($key);
+        return $value!==null ? $value : $_ENV[$key];
     }
 
     /**
@@ -474,7 +488,7 @@ class Config implements ConfigInterface
         $key = self::DATABASE_HOST;
         $value = $this->getXML_DATABASEParameterValue($key);
 
-        return $value!==null ? $value : getenv($key);
+        return $value!==null ? $value : $_ENV[$key];
     }
 
     /**
@@ -490,4 +504,29 @@ class Config implements ConfigInterface
 
         return $this->scheme()."://".$this->serverHost()."/".$this->projectDirectory()."/";
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function isEnvironmentDevelopment(): bool
+    {
+        return $this->environment() == self::DEV_ENVIRONMENT;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isEnvironmentStaging(): bool
+    {
+        return $this->environment() === self::STAGING_ENVIRONMENT;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isEnvironmentProduction(): bool
+    {
+        return $this->environment() === self::PRODUCTION_ENVIRONMENT;
+    }
+
 }

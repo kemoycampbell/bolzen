@@ -18,9 +18,9 @@ abstract class AbstractServiceConfigurator extends AbstractConfigurator
 {
     protected $parent;
     protected $id;
-    private $defaultTags = array();
+    private $defaultTags = [];
 
-    public function __construct(ServicesConfigurator $parent, Definition $definition, string $id = null, array $defaultTags = array())
+    public function __construct(ServicesConfigurator $parent, Definition $definition, string $id = null, array $defaultTags = [])
     {
         $this->parent = $parent;
         $this->definition = $definition;
@@ -36,13 +36,13 @@ abstract class AbstractServiceConfigurator extends AbstractConfigurator
                 $this->definition->addTag($name, $attributes);
             }
         }
-        $this->defaultTags = array();
+        $this->defaultTags = [];
     }
 
     /**
      * Registers a service.
      */
-    final public function set(string $id, string $class = null): ServiceConfigurator
+    final public function set(?string $id, string $class = null): ServiceConfigurator
     {
         $this->__destruct();
 
@@ -79,6 +79,18 @@ abstract class AbstractServiceConfigurator extends AbstractConfigurator
         $this->__destruct();
 
         return $this->parent->get($id);
+    }
+
+    /**
+     * Registers a stack of decorator services.
+     *
+     * @param InlineServiceConfigurator[]|ReferenceConfigurator[] $services
+     */
+    final public function stack(string $id, array $services): AliasConfigurator
+    {
+        $this->__destruct();
+
+        return $this->parent->stack($id, $services);
     }
 
     /**

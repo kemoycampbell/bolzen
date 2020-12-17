@@ -13,14 +13,15 @@ use Bolzen\Core\Config\ConfigInterface;
 use Bolzen\Core\Database\DatabaseInterface;
 use Bolzen\Core\Session\SessionInterface;
 use Bolzen\Core\User\UserInterface;
+use stdClass;
 
 class ModelLoader
 {
-    private $session;
-    private $database;
-    private $accessControl;
-    private $user;
-    private $config;
+    public static SessionInterface $session;
+    public static DatabaseInterface $database;
+    public static AccessControlInterface $accessControl;
+    public static UserInterface $user;
+    public static ConfigInterface $config;
 
     public static $modelInstance;
 
@@ -36,22 +37,10 @@ class ModelLoader
             self::$modelInstance->setModelDependencies($session, $database, $accessControl, $user, $config);
         }
 
-        $this->session = $session;
-        $this->database = $database;
-        $this->accessControl = $accessControl;
-        $this->user = $user;
-        $this->config = $config;
-    }
-
-    public function getModelDependencies():\stdClass
-    {
-        $std = new \stdClass();
-        $std->database = $this->database;
-        $std->accessControl = $this->accessControl;
-        $std->session = $this->session;
-        $std->user = $this->user;
-        $std->config = $this->config;
-
-        return $std;
+        self::$session = $session;
+        self::$database = $database;
+        self::$accessControl = $accessControl;
+        self::$user = $user;
+        self::$config = $config;
     }
 }

@@ -7,8 +7,11 @@
 
 namespace Bolzen\Core\AccessControl;
 
+use Bolzen\Core\Column\ColumnInterface;
 use Bolzen\Core\Config\ConfigInterface;
 use Bolzen\Core\Database\DatabaseInterface;
+use Bolzen\Core\Filter\Filter;
+use Bolzen\Core\Filter\FilterInterface;
 use Bolzen\Core\Session\SessionInterface;
 use Bolzen\Core\User\UserInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -99,7 +102,7 @@ class AccessControl implements AccessControlInterface
      */
     public function generateRandomToken(): string
     {
-        return bin2hex(openssl_random_pseudo_bytes($this->maxOpenSSlRandomPseudoCodeByteLength) );
+        return bin2hex(openssl_random_pseudo_bytes($this->maxOpenSSlRandomPseudoCodeByteLength));
     }
 
     /**
@@ -140,21 +143,20 @@ class AccessControl implements AccessControlInterface
     /**
      * This function checks whether a user have a certain role
      * @param string $role the role to check
-     * @param string $username the username. By default this is the current logged user
+     * @param FilterInterface|null $filter
      * @return bool true if the user has the role. False otherwise
      */
-    public function hasRole(string $role, string $username = ""): bool
+    public function hasRole(string $role, FilterInterface $filter = null): bool
     {
         $role = trim($role);
-        $username = trim($username);
 
         //make an exception so we can support whether a role has anonymous
-        if (empty($username) && $role==="anonymous") {
+        if (is_null($filter)&& $role==="anonymous") {
             return $this->user->isAnonymous();
         }
 
         //otherwise we check to see if the user has the targeted role
-        $roles = $this->user->getRoles($username);
+        $roles = $this->user->getRoles($filter);
         if (empty($role) || empty($roles)) {
             return false;
         }
@@ -164,17 +166,10 @@ class AccessControl implements AccessControlInterface
         return in_array(strtolower($role), array_map('strtolower', $roles));
     }
 
-    /**
-     * This function take an array of roles and check whether the user has
-     * those roles
-     * @param array $roles the roles to check
-     * @param string $username username.
-     * @return bool return true if the user has the roles. False otherwise
-     */
-    public function hasRoles(array $roles, string $username = ""): bool
+
+    public function hasRoles(array $roles, FilterInterface $filter = null): bool
     {
-        $username = trim($username);
-        $currentUserRoles = $this->user->getRoles($username);
+        $currentUserRoles = $this->user->getRoles($filter);
 
         if (empty($currentUserRoles) || empty($roles)) {
             return false;
@@ -253,17 +248,20 @@ class AccessControl implements AccessControlInterface
         $data = $this->database->select($this->roleTable, $columns, $where, $bindings);
 
         return $data->rowCount() > 0 ? $data->fetch()[$columns] : "";
-
     }
 
     /**
      * Assign a role to a user
      * @param string $username - the username to assign the role
      * @param string $role - the role to assign the user
+     * @param ColumnInterface|null $column - extra parameters
      * @return bool - true if the role was successful added, false otherwise
      */
-    public function assignRole(string $username, string $role): bool
-    {
+    public function assignRole(
+        string $username,
+        string $role,
+        ColumnInterface $column = null
+    ): bool {
         $username = trim($username);
         $role = trim($role);
 
@@ -271,47 +269,58 @@ class AccessControl implements AccessControlInterface
             return false;
         }
 
-        //prevent duplication
-        if ($this->hasRole($role, $username)) {
-            return false;
-        }
 
-
-
-        //can we get the role id?
+        //ensure that the role is valid
         $roleID = $this->getRoleID($role);
         if (empty($roleID)) {
             return false;
         }
 
-        $columns = "username,roleId";
+        //default columns
+        $columns = "username,accountRoles.roleId";
         $bindings = array($username, $roleID);
+        $filter = null;
+
+        //do the user want to enter columns and filtering?
+        if ($column!=null) {
+            //append column to the columns
+            $columns.=",".$column->columns();
+            $bindings = array_merge($bindings, $column->bindings());
+
+
+            //setting up the filter to check for role duplication
+            //append the user parameters to the where field
+            $fields = explode(",", $columns);
+            $where= implode(" =? AND ", $fields)."=?";
+
+            //pass the full clauses to the filter
+            $filter = new Filter($where, $bindings);
+        }
+
+        //prevent role duplicating
+        if ($this->hasRole($role, $filter)) {
+            return false;
+        }
+
         return $this->database->insert($this->userRolesTable, $columns, $bindings);
     }
 
-    /**
-     * Strip the user of a specific role
-     * @param string $username - the username to remove the role from
-     * @param string $role - the role to remove
-     * @return bool - true if the role was removed. False otherwise
-     */
-    public function stripRole(string $username, string $role): bool
-    {
-        $username = trim($username);
-        $role = trim($role);
 
-        if (empty($username) || empty($role)) {
+    /**@inheritDoc */
+    public function stripRole(FilterInterface $filter, string $role): bool
+    {
+
+        if (empty($role)) {
             return false;
         }
-
         $roleID = $this->getRoleID($role);
 
         if (empty($roleID)) {
             return false;
         }
 
-        $where = "username = ? and roleId = ?";
-        $bindings = array($username, $roleID);
+        $where = $filter->where();
+        $bindings = $filter->bindings();
         return $this->database->delete($this->userRolesTable, $where, $bindings);
     }
 

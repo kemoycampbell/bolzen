@@ -7,6 +7,9 @@
 
 namespace Bolzen\Core\AccessControl;
 
+use Bolzen\Core\Column\ColumnInterface;
+use Bolzen\Core\Filter\FilterInterface;
+
 interface AccessControlInterface
 {
 
@@ -53,19 +56,19 @@ interface AccessControlInterface
     /**
      * This function checks whether a user have a certain role
      * @param string $role the role to check
-     * @param string $username the username. By default this is the current logged user
+     * @param FilterInterface|null $filter
      * @return bool true if the user has the role. False otherwise
      */
-    public function hasRole(string $role, string $username = ""):bool;
+    public function hasRole(string $role, FilterInterface $filter = null):bool;
 
     /**
      * This function take an array of roles and check whether the user has
      * those roles
      * @param array $roles the roles to check
-     * @param string $username username.
+     * @param FilterInterface $filter
      * @return bool return true if the user has the roles. False otherwise
      */
-    public function hasRoles(array $roles, string $username = ""):bool;
+    public function hasRoles(array $roles, FilterInterface $filter):bool;
 
     /**
      * This function checks whether a session is valid.
@@ -92,17 +95,22 @@ interface AccessControlInterface
      * Assign a role to a user
      * @param string $username - the username to assign the role
      * @param string $role - the role to assign the user
+     * @param ColumnInterface|null $column
      * @return bool - true if the role was successful added, false otherwise
      */
-    public function assignRole(string $username, string $role):bool;
+    public function assignRole(
+        string $username,
+        string $role,
+        ColumnInterface $column = null
+    ):bool;
 
     /**
      * Strip the user of a specific role
-     * @param string $username - the username to remove the role from
+     * @param FilterInterface $filter
      * @param string $role - the role to remove
      * @return bool - true if the role was removed. False otherwise
      */
-    public function stripRole(string $username, string $role):bool;
+    public function stripRole(FilterInterface $filter, string $role):bool;
 
     public function getPath():string;
 }

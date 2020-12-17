@@ -7,17 +7,15 @@
 
 namespace Bolzen\Core\User;
 
+use Bolzen\Core\Filter\FilterInterface;
+
 interface UserInterface
 {
     /**
-     * This function returns all the roles of the supplied user.
-     * If the username is empty then it is assumed that the roles should
-     * be that of the current logged user
-     * @param string $username the user whose roles to get. The default username
-     *                         is set to the current logged user
-     * @return array the supplied user roles. Otherwise empty array
+     * @param FilterInterface|null $filter
+     * @return array
      */
-    public function getRoles(string $username = ""):array;
+    public function getRoles(FilterInterface $filter = null):array;
 
     /**
      * The username of the current logged user
