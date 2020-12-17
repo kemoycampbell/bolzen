@@ -1,0 +1,31 @@
+# do you want to enable the debugging. Useful in development
+debug: true
+#set to one of the corresponding value under server_environment
+environment: dev
+#do you want to use database
+enable_database: true
+#password hashing algorithm
+hashAlgorithm: sha256
+
+#use for log file rotating
+max_files: 2
+
+###################################
+# APPLICATION HOSTING ENVIRONMENT #
+###################################
+server_environment:
+  dev:
+    directory: bolzen
+    scheme: http
+    host: localhost
+    port: 80
+  stage:
+    directory:
+    scheme:
+    host:
+    port:
+  prod:
+    directory:
+    scheme:
+    host:
+    port:
