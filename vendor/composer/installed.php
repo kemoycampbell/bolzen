@@ -1,12 +1,12 @@
 <?php return array (
   'root' => 
   array (
-    'pretty_version' => 'dev-master',
-    'version' => 'dev-master',
+    'pretty_version' => 'dev-develop',
+    'version' => 'dev-develop',
     'aliases' => 
     array (
     ),
-    'reference' => '5ca64ac25306ee1ea5114f2b1484beb8a63ac7c2',
+    'reference' => '89e7ff5c167f0d6dcad4fd7e1e69ae47088f79b7',
     'name' => 'hostjams/bolzen',
   ),
   'versions' => 
@@ -22,12 +22,12 @@
     ),
     'hostjams/bolzen' => 
     array (
-      'pretty_version' => 'dev-master',
-      'version' => 'dev-master',
+      'pretty_version' => 'dev-develop',
+      'version' => 'dev-develop',
       'aliases' => 
       array (
       ),
-      'reference' => '5ca64ac25306ee1ea5114f2b1484beb8a63ac7c2',
+      'reference' => '89e7ff5c167f0d6dcad4fd7e1e69ae47088f79b7',
     ),
     'myclabs/deep-copy' => 
     array (
@@ -508,6 +508,15 @@
       array (
       ),
       'reference' => '173a79c462b1c81e1fa26129f71e41333d846b26',
+    ),
+    'symfony/yaml' => 
+    array (
+      'pretty_version' => 'v5.2.0',
+      'version' => '5.2.0.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => 'bb73619b2ae5121bbbcd9f191dfd53ded17ae598',
     ),
     'theseer/tokenizer' => 
     array (
