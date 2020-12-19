@@ -23,14 +23,14 @@ use Symfony\Component\DependencyInjection\Reference;
  */
 class CheckExceptionOnInvalidReferenceBehaviorPass extends AbstractRecursivePass
 {
-    private $serviceLocatorContextIds = array();
+    private $serviceLocatorContextIds = [];
 
     /**
      * {@inheritdoc}
      */
     public function process(ContainerBuilder $container)
     {
-        $this->serviceLocatorContextIds = array();
+        $this->serviceLocatorContextIds = [];
         foreach ($container->findTaggedServiceIds('container.service_locator_context') as $id => $tags) {
             $this->serviceLocatorContextIds[$id] = $tags[0]['id'];
             $container->getDefinition($id)->clearTag('container.service_locator_context');
@@ -39,11 +39,11 @@ class CheckExceptionOnInvalidReferenceBehaviorPass extends AbstractRecursivePass
         try {
             return parent::process($container);
         } finally {
-            $this->serviceLocatorContextIds = array();
+            $this->serviceLocatorContextIds = [];
         }
     }
 
-    protected function processValue($value, $isRoot = false)
+    protected function processValue($value, bool $isRoot = false)
     {
         if (!$value instanceof Reference) {
             return parent::processValue($value, $isRoot);
@@ -64,7 +64,7 @@ class CheckExceptionOnInvalidReferenceBehaviorPass extends AbstractRecursivePass
                     if ($k !== $id) {
                         $currentId = $k.'" in the container provided to "'.$currentId;
                     }
-                    throw new ServiceNotFoundException($id, $currentId);
+                    throw new ServiceNotFoundException($id, $currentId, null, $this->getAlternatives($id));
                 }
             }
         }
@@ -83,6 +83,23 @@ class CheckExceptionOnInvalidReferenceBehaviorPass extends AbstractRecursivePass
             }
         }
 
-        throw new ServiceNotFoundException($id, $currentId);
+        throw new ServiceNotFoundException($id, $currentId, null, $this->getAlternatives($id));
+    }
+
+    private function getAlternatives(string $id): array
+    {
+        $alternatives = [];
+        foreach ($this->container->getServiceIds() as $knownId) {
+            if ('' === $knownId || '.' === $knownId[0]) {
+                continue;
+            }
+
+            $lev = levenshtein($id, $knownId);
+            if ($lev <= \strlen($id) / 3 || false !== strpos($knownId, $id)) {
+                $alternatives[] = $knownId;
+            }
+        }
+
+        return $alternatives;
     }
 }

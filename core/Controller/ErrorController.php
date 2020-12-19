@@ -8,18 +8,15 @@
 
 namespace Bolzen\Core\Controller;
 
-use Bolzen\Core\Config\ConfigInterface;
 use Bolzen\Core\Log\Log;
 use Bolzen\Core\Model\Model;
+use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use Symfony\Component\ErrorHandler\Exception\FlattenException;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Debug\Exception\FlattenException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 class ErrorController extends Model
 {
-    private $logger;
 
     public function __construct()
     {
@@ -29,16 +26,18 @@ class ErrorController extends Model
     public function exception(FlattenException $exception)
     {
 
-        if ($this->config->environment()==="dev") {
+        if ($this->config->isEnvironmentDevelopment()) {
             $msg = 'Something went wrong! ('.$exception->getMessage().')';
         } else {
-            $this->logger = new Log($this->config->getMaxLogFiles());
             if ($exception->getStatusCode()===Response::HTTP_NOT_FOUND) {
-                $msg = "Page not found ".$exception->getMessage();
+                $page = $exception->getPrevious()->getTrace()[1]['args'][0][1];
+                $msg = "The page $page doesnt exist";
             } else {
                 $msg = "We ran into an error while performing your request";
             }
-            $this->logger->error($exception->getMessage());
+            $logger = new Log($this->config->getMaxLogFiles());
+            $logger->error($msg);
+
         }
         return new Response($msg, $exception->getStatusCode());
     }

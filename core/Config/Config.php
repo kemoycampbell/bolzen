@@ -7,14 +7,16 @@
 
 namespace Bolzen\Core\Config;
 
-use http\Exception\InvalidArgumentException;
+
 use Symfony\Component\Dotenv\Dotenv;
+use Symfony\Component\Yaml\Yaml;
 
 class Config implements ConfigInterface
 {
+    private const SERVER_ENVIRONMENT = 'server_environment';
     private const ENVIRONMENT = "environment";
     private const DEBUG = "debug";
-    private const ENABLED_DATABASE = "enableDatabase";
+    private const ENABLED_DATABASE = "enable_database";
     private const DIRECTORY = "directory";
     private const SCHEME = "scheme";
     private const HOST = "host";
@@ -24,130 +26,23 @@ class Config implements ConfigInterface
     private const DATABASE_PASSWORD = "DB_PASS";
     private const DATABASE_PREFIX = "DB_PREFIX";
     private const MAXIMUM_LOG = "max_files";
-    private const XML_ENABLED = "useXmlConfigurationVariable";
-    private const XML_PATH = "xmlPath";
-    private const XML_DATABASE = "xmlDatabase";
+    private const ENV_PATH = __DIR__.'/../../config/.env';
+    private const DEV_ENVIRONMENT = 'dev';
+    private const STAGING_ENVIRONMENT = 'stage';
+    private const PRODUCTION_ENVIRONMENT = 'prod';
+    private const YAML_CONFIG_FILE = __DIR__ . '/../../config/config.yaml';
 
     private $environment;
     private $config;
     private $server;
     private $databaseParametersLoaded;
-    private $XML_DATABASEParameters;
-    private $xml;
 
     public function __construct()
     {
+        $this->loadEnv();
         $this->loadConfig();
-        $this->loadXmlConfigurationIfNeed();
         $this->loadDatabaseParametersIfNeed();
     }
-
-    public function isXmlConfigurationRequired():bool
-    {
-        if (!isset($this->config[self::XML_ENABLED])) {
-            throw new \InvalidArgumentException("The parameter ".self::XML_ENABLED." is missing from config");
-        }
-
-        $status = $this->config[self::XML_ENABLED];
-
-        if (!is_bool($status)) {
-            throw new \InvalidArgumentException("The parameter ".self::XML_ENABLED." must be a boolean");
-        }
-
-        return $status;
-    }
-
-    private function loadXmlConfigurationIfNeed():void
-    {
-        if (!$this->XML_DATABASEParameters && $this->isXmlConfigurationRequired()) {
-            //ensure that the XML_DATABASE parameter exist
-            if (!isset($this->config[self::XML_DATABASE])) {
-                throw new \InvalidArgumentException("The parameter ".self::XML_DATABASE." is missing from config");
-            }
-
-            //ensure that we have the xml file path
-            if (!isset($this->config[self::XML_PATH])) {
-                throw new \InvalidArgumentException("The parameter ".self::XML_PATH." is missing from config");
-            }
-
-            //ensure file path exist
-            if (!file_exists($this->config[self::XML_PATH])) {
-                throw new \InvalidArgumentException("We were not able to located the file 
-                ".$this->config[self::XML_PATH]);
-            }
-
-            //ensure that we have all database parameters(key)
-            $this->XML_DATABASEParameters = $this->config[self::XML_DATABASE];
-
-            if (!isset($this->XML_DATABASEParameters[self::DATABASE_PREFIX])) {
-                throw new \InvalidArgumentException("The parameter ". self::DATABASE_PREFIX. " is missing from
-                ".self::XML_DATABASE." in config");
-            }
-
-            if (!isset($this->XML_DATABASEParameters[self::DATABASE_USER])) {
-                throw new \InvalidArgumentException("The parameter ". self::DATABASE_USER. " is missing from
-                ".self::XML_DATABASE." in config");
-            }
-
-            if (!isset($this->XML_DATABASEParameters[self::DATABASE_PASSWORD])) {
-                throw new \InvalidArgumentException("The parameter ". self::DATABASE_PASSWORD. " is missing from
-                ".self::XML_DATABASE." in config");
-            }
-
-            if (!isset($this->XML_DATABASEParameters[self::DATABASE_HOST])) {
-                throw new \InvalidArgumentException("The parameter ". self::DATABASE_HOST. " is missing from
-                ".self::XML_DATABASE." in config");
-            }
-
-            if (!isset($this->XML_DATABASEParameters[self::DATABASE_NAME])) {
-                throw new \InvalidArgumentException("The parameter ". self::DATABASE_NAME. " is missing from
-                ".self::XML_DATABASE." in config");
-            }
-
-            libxml_disable_entity_loader(false); //an attempt to prevent php bug
-            //https://bugs.php.net/bug.php?id=62577
-            $this->xml = simplexml_load_file($this->config[self::XML_PATH]);
-        }
-    }
-
-    /**
-     * This function take the config xml variable and returns the value
-     * @param string $configName - the xml configuration variable name on whose value to get
-     * @return string - return the value associated with the xml variable
-     * @throws \InvalidArgumentException if we are not able to located the xml variable
-     */
-    public function getXmlConfigValue(string $configName):string
-    {
-        $configVal = $this->xml->xpath("//configvar[name=\"" . $configName . "\"]/./value");
-        if (!isset($configVal[0])) {
-            throw new \InvalidArgumentException("We were not able to located $configName in the xml config file");
-        }
-
-        return $configVal[0];
-    }
-
-    private function validateXML_DATABASEParameter(string $key)
-    {
-        if ($this->isXmlConfigurationRequired()) {
-            $key = $this->XML_DATABASEParameters[$key];
-            if (!empty($key) && empty($this->getXmlConfigValue($key))) {
-                throw new \InvalidArgumentException("The parameter for $key in the xml config cannot be empty");
-            }
-        }
-    }
-
-    private function getXML_DATABASEParameterValue(string $key):?string
-    {
-        if ($this->isXmlConfigurationRequired()) {
-            $key = $this->XML_DATABASEParameters[$key];
-            if (!empty($key)) {
-                return $this->getXmlConfigValue($key);
-            }
-        }
-
-        return null;
-    }
-
 
     /**
      * This method loads the database parameters from the .env if needs
@@ -155,10 +50,6 @@ class Config implements ConfigInterface
     private function loadDatabaseParametersIfNeed():void
     {
         if (!$this->databaseParametersLoaded && $this->isDatabaseRequired()) {
-
-            $dotEnv = new Dotenv();
-            $dotEnv->load(__DIR__.'/../../config/.env');
-
             //ensure we have the database parameters
             $this->databaseNameValidation();
             $this->databaseHostValidation();
@@ -179,10 +70,21 @@ class Config implements ConfigInterface
         return $this->environment;
     }
 
+    /**
+     * This function check if an .env exist and load it
+     */
+    private function loadEnv():void
+    {
+        if (file_exists(self::ENV_PATH)) {
+            $dotEnv = new Dotenv();
+            $dotEnv->load(self::ENV_PATH);
+        }
+    }
+
     private function loadConfig():void
     {
         if (!$this->config) {
-            $this->config = include __DIR__ . '/../../config/config.php';
+            $this->config = Yaml::parseFile(self::YAML_CONFIG_FILE);
 
             //verifications
             $this->environmentValidation();
@@ -238,6 +140,7 @@ class Config implements ConfigInterface
         return $size;
     }
 
+
     /**
      * This method parses the debug parameter as well as check to ensure that the parameter is acceptable
      */
@@ -277,11 +180,11 @@ class Config implements ConfigInterface
     {
         if (!$this->server) {
             //can we locate the server info based on the environment
-            if (!isset($this->config[$this->environment])) {
+            if (!isset($this->config[self::SERVER_ENVIRONMENT][$this->environment])) {
                 throw new \InvalidArgumentException("The array $this->environment is missing!");
             }
 
-            $this->server = $this->config[$this->environment];
+            $this->server = $this->config[self::SERVER_ENVIRONMENT][$this->environment];
             //are we missing any keys(directory, scheme and host)?
 
             if (!array_key_exists(self::DIRECTORY, $this->server)) {
@@ -291,6 +194,7 @@ class Config implements ConfigInterface
             } elseif (!array_key_exists(self::HOST, $this->server)) {
                 throw new \InvalidArgumentException(self::HOST. " is missing from the config");
             }
+
 
             //scheme, host cannot be empty
             if (empty($this->server[self::SCHEME]) || empty($this->server[self::HOST])) {
@@ -304,9 +208,7 @@ class Config implements ConfigInterface
      */
     private function databasePrefixValidation():void
     {
-        if ($this->isXmlConfigurationRequired()) {
-            $this->validateXML_DATABASEParameter(self::DATABASE_PREFIX);
-        } elseif (empty(getenv(self::DATABASE_PREFIX))) {
+        if (empty($_ENV[self::DATABASE_PREFIX])) {
             throw new \InvalidArgumentException(self::DATABASE_PREFIX. " cannot be empty");
         }
     }
@@ -316,9 +218,7 @@ class Config implements ConfigInterface
      */
     private function databaseNameValidation():void
     {
-        if ($this->isXmlConfigurationRequired()) {
-            $this->validateXML_DATABASEParameter(self::DATABASE_NAME);
-        } elseif (empty(getenv(self::DATABASE_NAME))) {
+        if (empty($_ENV[self::DATABASE_NAME])) {
             throw new \InvalidArgumentException(self::DATABASE_NAME. " cannot be empty");
         }
     }
@@ -328,9 +228,7 @@ class Config implements ConfigInterface
      */
     private function databaseUserValidation():void
     {
-        if ($this->isXmlConfigurationRequired()) {
-            $this->validateXML_DATABASEParameter(self::DATABASE_USER);
-        } elseif (empty(getenv(self::DATABASE_USER))) {
+        if (empty($_ENV[self::DATABASE_USER])) {
             throw new \InvalidArgumentException(self::DATABASE_USER." cannot be empty");
         }
     }
@@ -340,10 +238,8 @@ class Config implements ConfigInterface
      */
     private function databasePasswordValidation():void
     {
-        if ($this->environment !=="dev") {
-            if ($this->isXmlConfigurationRequired()) {
-                $this->validateXML_DATABASEParameter(self::DATABASE_PASSWORD);
-            } elseif (empty(getenv(self::DATABASE_PASSWORD))) {
+        if ($this->environment !=="dev" && !$this->environment===self::STAGING_ENVIRONMENT) {
+            if (empty($_ENV[self::DATABASE_PASSWORD])) {
                 throw new \InvalidArgumentException(self::DATABASE_PASSWORD. " cannot be empty");
             }
         }
@@ -354,10 +250,7 @@ class Config implements ConfigInterface
      */
     private function databaseHostValidation():void
     {
-
-        if ($this->isXmlConfigurationRequired()) {
-            $this->validateXML_DATABASEParameter(self::DATABASE_HOST);
-        } elseif (empty(getenv(self::DATABASE_HOST))) {
+        if (empty($_ENV[self::DATABASE_HOST])) {
             throw new \InvalidArgumentException(self::DATABASE_HOST." cannot be empty");
         }
     }
@@ -413,10 +306,7 @@ class Config implements ConfigInterface
      */
     public function databaseName(): string
     {
-        $key = self::DATABASE_NAME;
-        $value = $this->getXML_DATABASEParameterValue($key);
-
-        return $value!==null ? $value : getenv($key);
+        return $_ENV[self::DATABASE_NAME];
     }
 
     /**
@@ -435,10 +325,7 @@ class Config implements ConfigInterface
      */
     public function databasePassword(): string
     {
-        $key = self::DATABASE_PASSWORD;
-        $value = $this->getXML_DATABASEParameterValue($key);
-
-        return $value!==null ? $value : getenv($key);
+        return $_ENV[self::DATABASE_PASSWORD];
     }
 
     /**
@@ -447,10 +334,7 @@ class Config implements ConfigInterface
      */
     public function databaseUser():string
     {
-        $key = self::DATABASE_USER;
-        $value = $this->getXML_DATABASEParameterValue($key);
-
-        return $value!==null ? $value : getenv($key);
+        return $_ENV[self::DATABASE_USER];
     }
 
     /**
@@ -459,10 +343,7 @@ class Config implements ConfigInterface
      */
     public function databasePrefix(): string
     {
-        $key = self::DATABASE_PREFIX;
-        $value = $this->getXML_DATABASEParameterValue($key);
-
-        return $value!==null ? $value : getenv($key);
+        return $_ENV[self::DATABASE_PREFIX];
     }
 
     /**
@@ -471,10 +352,7 @@ class Config implements ConfigInterface
      */
     public function databaseHost(): string
     {
-        $key = self::DATABASE_HOST;
-        $value = $this->getXML_DATABASEParameterValue($key);
-
-        return $value!==null ? $value : getenv($key);
+        return$_ENV[self::DATABASE_HOST];
     }
 
     /**
@@ -483,11 +361,32 @@ class Config implements ConfigInterface
      */
     public function getBaseUrl(): string
     {
-        //https://localhost/projectDirectory
-        if (empty($this->projectDirectory())) {
-            return $this->scheme()."://".$this->serverHost()."/";
-        }
-
-        return $this->scheme()."://".$this->serverHost()."/".$this->projectDirectory()."/";
+        $path = $this->scheme()."://".$this->serverHost();
+        return empty($this->projectDirectory()) ? $path : $path."/".$this->projectDirectory()."/";
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function isEnvironmentDevelopment(): bool
+    {
+        return $this->environment() == self::DEV_ENVIRONMENT;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isEnvironmentStaging(): bool
+    {
+        return $this->environment() === self::STAGING_ENVIRONMENT;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isEnvironmentProduction(): bool
+    {
+        return $this->environment() === self::PRODUCTION_ENVIRONMENT;
+    }
+
 }

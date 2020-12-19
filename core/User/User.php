@@ -8,8 +8,10 @@
 namespace Bolzen\Core\User;
 
 use Bolzen\Core\Database\DatabaseInterface;
+use Bolzen\Core\Filter\FilterInterface;
 use Bolzen\Core\Session\SessionInterface;
 use Bolzen\Core\Tables\CoreTables;
+use PDO;
 
 class User implements UserInterface
 {
@@ -32,22 +34,26 @@ class User implements UserInterface
      * This function returns all the roles of the supplied user.
      * If the username is empty then it is assumed that the roles should
      * be that of the current logged user
-     * @param string $username the user whose roles to get. The default username
-     *                         is set to the current logged user
+     * @param FilterInterface|null $filter
      * @return array the supplied user roles. Otherwise empty array
      */
-    public function getRoles(string $username = ""): array
+    public function getRoles(FilterInterface $filter = null): array
     {
-        //if no username is supply then we assumed the current logged user
-        if (empty($username)) {
-            $username = $this->getUserName();
+        //by default we assume that the developer which to simple get the role of the current logged user
+        $where = "accountRoles.username = ?";
+        $bindings = array($this->getUserName());
+
+        //developer which to do custom filter on the role and accountRoles table so we will disregard the defaults
+        //set above
+        if (!is_null($filter)) {
+            $where = $filter->where();
+            $bindings = $filter->bindings();
         }
 
         $sql = "SELECT name as role FROM roles INNER JOIN accountRoles ON
-                accountRoles.roleId = roles.roleId WHERE accountRoles.username = ?";
-        $bindings = array($username);
+                accountRoles.roleId = roles.roleId WHERE ".$where;
 
-        return $this->database->genericSqlBuilder($sql, $bindings)->fetchAll(\PDO::FETCH_ASSOC);
+        return $this->database->genericSqlBuilder($sql, $bindings)->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**

@@ -17,47 +17,22 @@ use Bolzen\Core\User\UserInterface;
 class Model
 {
     use ModelTrait;
+    use ErrorTrait;
 
-    protected $session;
-    protected $database;
-    protected $accessControl;
-    protected $user;
-    protected $config;
+    protected SessionInterface $session;
+    protected DatabaseInterface $database;
+    protected AccessControlInterface $accessControl;
+    protected UserInterface $user;
+    protected ConfigInterface $config;
 
     public function __construct()
     {
-        $modelLoader = ModelLoader::$modelInstance->getModelDependencies();
 
-        $this->session = $this->setSession($modelLoader->session)->getSession();
-        $this->user = $this->setUser($modelLoader->user);
-        $this->database = $this->setDatabase($modelLoader->database);
-        $this->accessControl = $this->setAccessControl($modelLoader->accessControl);
-        $this->config = $this->setConfig($modelLoader->config);
-    }
-
-    private function setConfig(ConfigInterface $config)
-    {
-        return $config;
-    }
-
-    private function setSession(SessionInterface $session)
-    {
-        return $session;
-    }
-
-    private function setUser(UserInterface $user)
-    {
-        return $user;
-    }
-
-    private function setDatabase(DatabaseInterface $database)
-    {
-        return $database;
-    }
-
-    private function setAccessControl(AccessControlInterface $accessControl)
-    {
-        return $accessControl;
+        $this->session = ModelLoader::$session;
+        $this->user = ModelLoader::$user;
+        $this->database = ModelLoader::$database;
+        $this->accessControl = ModelLoader::$accessControl;
+        $this->config = ModelLoader::$config;
     }
 
 }

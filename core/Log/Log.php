@@ -6,17 +6,15 @@
  */
 
 namespace Bolzen\Core\Log;
-
-use Monolog\Handler\RotatingFileHandler;
+use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
 class Log extends Logger
 {
-    //private
     public function __construct(int $size)
     {
         $path = __DIR__ . '/../../var/log/error.log';
-        parent::__construct('logReporter', array(new RotatingFileHandler($path, $size, Logger::ERROR)));
+        parent::__construct('BolzenLogReporter');
+        $this->pushHandler(new StreamHandler($path, Logger::ERROR));
     }
-
 }

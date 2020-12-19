@@ -11,6 +11,8 @@
 
 namespace Symfony\Component\DependencyInjection;
 
+use Symfony\Component\DependencyInjection\Argument\RewindableGenerator;
+use Symfony\Component\DependencyInjection\Argument\ServiceLocator as ArgumentServiceLocator;
 use Symfony\Component\DependencyInjection\Exception\EnvNotFoundException;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
 use Symfony\Component\DependencyInjection\Exception\ParameterCircularReferenceException;
@@ -21,6 +23,10 @@ use Symfony\Component\DependencyInjection\ParameterBag\EnvPlaceholderParameterBa
 use Symfony\Component\DependencyInjection\ParameterBag\FrozenParameterBag;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Contracts\Service\ResetInterface;
+
+// Help opcache.preload discover always-needed symbols
+class_exists(RewindableGenerator::class);
+class_exists(ArgumentServiceLocator::class);
 
 /**
  * Container is a dependency injection container.
@@ -39,20 +45,20 @@ use Symfony\Contracts\Service\ResetInterface;
  * @author Fabien Potencier <fabien@symfony.com>
  * @author Johannes M. Schmitt <schmittjoh@gmail.com>
  */
-class Container implements ResettableContainerInterface
+class Container implements ContainerInterface, ResetInterface
 {
     protected $parameterBag;
-    protected $services = array();
-    protected $privates = array();
-    protected $fileMap = array();
-    protected $methodMap = array();
-    protected $factories = array();
-    protected $aliases = array();
-    protected $loading = array();
-    protected $resolving = array();
-    protected $syntheticIds = array();
+    protected $services = [];
+    protected $privates = [];
+    protected $fileMap = [];
+    protected $methodMap = [];
+    protected $factories = [];
+    protected $aliases = [];
+    protected $loading = [];
+    protected $resolving = [];
+    protected $syntheticIds = [];
 
-    private $envCache = array();
+    private $envCache = [];
     private $compiled = false;
     private $getEnv;
 
@@ -107,7 +113,7 @@ class Container implements ResettableContainerInterface
      *
      * @throws InvalidArgumentException if the parameter is not defined
      */
-    public function getParameter($name)
+    public function getParameter(string $name)
     {
         return $this->parameterBag->get($name);
     }
@@ -119,7 +125,7 @@ class Container implements ResettableContainerInterface
      *
      * @return bool The presence of parameter in container
      */
-    public function hasParameter($name)
+    public function hasParameter(string $name)
     {
         return $this->parameterBag->has($name);
     }
@@ -130,7 +136,7 @@ class Container implements ResettableContainerInterface
      * @param string $name  The parameter name
      * @param mixed  $value The parameter value
      */
-    public function setParameter($name, $value)
+    public function setParameter(string $name, $value)
     {
         $this->parameterBag->set($name, $value);
     }
@@ -138,13 +144,10 @@ class Container implements ResettableContainerInterface
     /**
      * Sets a service.
      *
-     * Setting a service to null resets the service: has() returns false and get()
+     * Setting a synthetic service to null resets it: has() returns false and get()
      * behaves in the same way as if the service was never created.
-     *
-     * @param string $id      The service identifier
-     * @param object $service The service instance
      */
-    public function set($id, $service)
+    public function set(string $id, ?object $service)
     {
         // Runs the internal initializer; used by the dumped container to include always-needed files
         if (isset($this->privates['service_container']) && $this->privates['service_container'] instanceof \Closure) {
@@ -210,7 +213,7 @@ class Container implements ResettableContainerInterface
      * @param string $id              The service identifier
      * @param int    $invalidBehavior The behavior when the service does not exist
      *
-     * @return object The associated service
+     * @return object|null The associated service
      *
      * @throws ServiceCircularReferenceException When a circular reference is detected
      * @throws ServiceNotFoundException          When the service is not defined
@@ -218,11 +221,11 @@ class Container implements ResettableContainerInterface
      *
      * @see Reference
      */
-    public function get($id, $invalidBehavior = /* self::EXCEPTION_ON_INVALID_REFERENCE */ 1)
+    public function get($id, int $invalidBehavior = /* self::EXCEPTION_ON_INVALID_REFERENCE */ 1)
     {
         return $this->services[$id]
             ?? $this->services[$id = $this->aliases[$id] ?? $id]
-            ?? ('service_container' === $id ? $this : ($this->factories[$id] ?? array($this, 'make'))($id, $invalidBehavior));
+            ?? ('service_container' === $id ? $this : ($this->factories[$id] ?? [$this, 'make'])($id, $invalidBehavior));
     }
 
     /**
@@ -233,7 +236,7 @@ class Container implements ResettableContainerInterface
     private function make(string $id, int $invalidBehavior)
     {
         if (isset($this->loading[$id])) {
-            throw new ServiceCircularReferenceException($id, array_merge(array_keys($this->loading), array($id)));
+            throw new ServiceCircularReferenceException($id, array_merge(array_keys($this->loading), [$id]));
         }
 
         $this->loading[$id] = true;
@@ -257,13 +260,13 @@ class Container implements ResettableContainerInterface
                 throw new ServiceNotFoundException($id);
             }
             if (isset($this->syntheticIds[$id])) {
-                throw new ServiceNotFoundException($id, null, null, array(), sprintf('The "%s" service is synthetic, it needs to be set at boot time before it can be used.', $id));
+                throw new ServiceNotFoundException($id, null, null, [], sprintf('The "%s" service is synthetic, it needs to be set at boot time before it can be used.', $id));
             }
             if (isset($this->getRemovedIds()[$id])) {
-                throw new ServiceNotFoundException($id, null, null, array(), sprintf('The "%s" service or alias has been removed or inlined when the container was compiled. You should either make it public, or stop using the container directly and use dependency injection instead.', $id));
+                throw new ServiceNotFoundException($id, null, null, [], sprintf('The "%s" service or alias has been removed or inlined when the container was compiled. You should either make it public, or stop using the container directly and use dependency injection instead.', $id));
             }
 
-            $alternatives = array();
+            $alternatives = [];
             foreach ($this->getServiceIds() as $knownId) {
                 if ('' === $knownId || '.' === $knownId[0]) {
                     continue;
@@ -276,6 +279,8 @@ class Container implements ResettableContainerInterface
 
             throw new ServiceNotFoundException($id, null, null, $alternatives);
         }
+
+        return null;
     }
 
     /**
@@ -285,7 +290,7 @@ class Container implements ResettableContainerInterface
      *
      * @return bool true if service has already been initialized, false otherwise
      */
-    public function initialized($id)
+    public function initialized(string $id)
     {
         if (isset($this->aliases[$id])) {
             $id = $this->aliases[$id];
@@ -304,7 +309,7 @@ class Container implements ResettableContainerInterface
     public function reset()
     {
         $services = $this->services + $this->privates;
-        $this->services = $this->factories = $this->privates = array();
+        $this->services = $this->factories = $this->privates = [];
 
         foreach ($services as $service) {
             try {
@@ -320,11 +325,11 @@ class Container implements ResettableContainerInterface
     /**
      * Gets all service ids.
      *
-     * @return array An array of all defined service ids
+     * @return string[] An array of all defined service ids
      */
     public function getServiceIds()
     {
-        return array_unique(array_merge(array('service_container'), array_keys($this->fileMap), array_keys($this->methodMap), array_keys($this->services)));
+        return array_map('strval', array_unique(array_merge(['service_container'], array_keys($this->fileMap), array_keys($this->methodMap), array_keys($this->aliases), array_keys($this->services))));
     }
 
     /**
@@ -334,7 +339,7 @@ class Container implements ResettableContainerInterface
      */
     public function getRemovedIds()
     {
-        return array();
+        return [];
     }
 
     /**
@@ -346,7 +351,7 @@ class Container implements ResettableContainerInterface
      */
     public static function camelize($id)
     {
-        return strtr(ucwords(strtr($id, array('_' => ' ', '.' => '_ ', '\\' => '_ '))), array(' ' => ''));
+        return strtr(ucwords(strtr($id, ['_' => ' ', '.' => '_ ', '\\' => '_ '])), [' ' => '']);
     }
 
     /**
@@ -358,13 +363,11 @@ class Container implements ResettableContainerInterface
      */
     public static function underscore($id)
     {
-        return strtolower(preg_replace(array('/([A-Z]+)([A-Z][a-z])/', '/([a-z\d])([A-Z])/'), array('\\1_\\2', '\\1_\\2'), str_replace('_', '.', $id)));
+        return strtolower(preg_replace(['/([A-Z]+)([A-Z][a-z])/', '/([a-z\d])([A-Z])/'], ['\\1_\\2', '\\1_\\2'], str_replace('_', '.', $id)));
     }
 
     /**
      * Creates a service by requiring its factory file.
-     *
-     * @return object The service created by the file
      */
     protected function load($file)
     {
@@ -385,11 +388,11 @@ class Container implements ResettableContainerInterface
         if (isset($this->resolving[$envName = "env($name)"])) {
             throw new ParameterCircularReferenceException(array_keys($this->resolving));
         }
-        if (isset($this->envCache[$name]) || array_key_exists($name, $this->envCache)) {
+        if (isset($this->envCache[$name]) || \array_key_exists($name, $this->envCache)) {
             return $this->envCache[$name];
         }
         if (!$this->has($id = 'container.env_var_processors_locator')) {
-            $this->set($id, new ServiceLocator(array()));
+            $this->set($id, new ServiceLocator([]));
         }
         if (!$this->getEnv) {
             $this->getEnv = new \ReflectionMethod($this, __FUNCTION__);
@@ -416,9 +419,14 @@ class Container implements ResettableContainerInterface
     }
 
     /**
+     * @param string|false $registry
+     * @param string|bool  $load
+     *
+     * @return mixed
+     *
      * @internal
      */
-    final protected function getService($registry, $id, $method, $load)
+    final protected function getService($registry, string $id, ?string $method, $load)
     {
         if ('service_container' === $id) {
             return $this;

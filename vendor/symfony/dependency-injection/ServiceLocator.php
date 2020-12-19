@@ -12,19 +12,19 @@
 namespace Symfony\Component\DependencyInjection;
 
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface as PsrContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Symfony\Component\DependencyInjection\Exception\RuntimeException;
 use Symfony\Component\DependencyInjection\Exception\ServiceCircularReferenceException;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Contracts\Service\ServiceLocatorTrait;
+use Symfony\Contracts\Service\ServiceProviderInterface;
 use Symfony\Contracts\Service\ServiceSubscriberInterface;
 
 /**
  * @author Robin Chalas <robin.chalas@gmail.com>
  * @author Nicolas Grekas <p@tchwork.com>
  */
-class ServiceLocator implements PsrContainerInterface
+class ServiceLocator implements ServiceProviderInterface
 {
     use ServiceLocatorTrait {
         get as private doGet;
@@ -57,15 +57,17 @@ class ServiceLocator implements PsrContainerInterface
         }
     }
 
-    public function __invoke($id)
+    public function __invoke(string $id)
     {
         return isset($this->factories[$id]) ? $this->get($id) : null;
     }
 
     /**
      * @internal
+     *
+     * @return static
      */
-    public function withContext($externalId, Container $container)
+    public function withContext(string $externalId, Container $container): self
     {
         $locator = clone $this;
         $locator->externalId = $externalId;
@@ -79,46 +81,47 @@ class ServiceLocator implements PsrContainerInterface
         if ($this->loading) {
             $msg = sprintf('The service "%s" has a dependency on a non-existent service "%s". This locator %s', end($this->loading), $id, $this->formatAlternatives());
 
-            return new ServiceNotFoundException($id, end($this->loading) ?: null, null, array(), $msg);
+            return new ServiceNotFoundException($id, end($this->loading) ?: null, null, [], $msg);
         }
 
-        $class = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS, 4);
+        $class = debug_backtrace(\DEBUG_BACKTRACE_PROVIDE_OBJECT | \DEBUG_BACKTRACE_IGNORE_ARGS, 4);
         $class = isset($class[3]['object']) ? \get_class($class[3]['object']) : null;
         $externalId = $this->externalId ?: $class;
 
-        $msg = sprintf('Service "%s" not found: ', $id);
+        $msg = [];
+        $msg[] = sprintf('Service "%s" not found:', $id);
 
         if (!$this->container) {
             $class = null;
         } elseif ($this->container->has($id) || isset($this->container->getRemovedIds()[$id])) {
-            $msg .= 'even though it exists in the app\'s container, ';
+            $msg[] = 'even though it exists in the app\'s container,';
         } else {
             try {
                 $this->container->get($id);
                 $class = null;
             } catch (ServiceNotFoundException $e) {
                 if ($e->getAlternatives()) {
-                    $msg .= sprintf(' did you mean %s? Anyway, ', $this->formatAlternatives($e->getAlternatives(), 'or'));
+                    $msg[] = sprintf('did you mean %s? Anyway,', $this->formatAlternatives($e->getAlternatives(), 'or'));
                 } else {
                     $class = null;
                 }
             }
         }
         if ($externalId) {
-            $msg .= sprintf('the container inside "%s" is a smaller service locator that %s', $externalId, $this->formatAlternatives());
+            $msg[] = sprintf('the container inside "%s" is a smaller service locator that %s', $externalId, $this->formatAlternatives());
         } else {
-            $msg .= sprintf('the current service locator %s', $this->formatAlternatives());
+            $msg[] = sprintf('the current service locator %s', $this->formatAlternatives());
         }
 
         if (!$class) {
             // no-op
         } elseif (is_subclass_of($class, ServiceSubscriberInterface::class)) {
-            $msg .= sprintf(' Unless you need extra laziness, try using dependency injection instead. Otherwise, you need to declare it using "%s::getSubscribedServices()".', preg_replace('/([^\\\\]++\\\\)++/', '', $class));
+            $msg[] = sprintf('Unless you need extra laziness, try using dependency injection instead. Otherwise, you need to declare it using "%s::getSubscribedServices()".', preg_replace('/([^\\\\]++\\\\)++/', '', $class));
         } else {
-            $msg .= 'Try using dependency injection instead.';
+            $msg[] = 'Try using dependency injection instead.';
         }
 
-        return new ServiceNotFoundException($id, end($this->loading) ?: null, null, array(), $msg);
+        return new ServiceNotFoundException($id, end($this->loading) ?: null, null, [], implode(' ', $msg));
     }
 
     private function createCircularReferenceException(string $id, array $path): ContainerExceptionInterface
@@ -126,7 +129,7 @@ class ServiceLocator implements PsrContainerInterface
         return new ServiceCircularReferenceException($id, $path);
     }
 
-    private function formatAlternatives(array $alternatives = null, $separator = 'and')
+    private function formatAlternatives(array $alternatives = null, string $separator = 'and'): string
     {
         $format = '"%s"%s';
         if (null === $alternatives) {

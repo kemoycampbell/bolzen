@@ -19,6 +19,7 @@ use Bolzen\Core\Model\ModelLoader;
 use Bolzen\Core\Session\Session;
 use Bolzen\Core\Twig\Twig;
 use Bolzen\Core\User\User;
+use Bolzen\Src\Exception\InvalidArgumentExceptionSubscriber;
 use Symfony\Component\DependencyInjection;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpFoundation;
@@ -58,9 +59,8 @@ class Container
         $this->container->register('session', Session::class);
         $this->container->register('database', Database::class)->setArguments(array(new Reference('config')));
 
-        $this->container->register('listener.exception', HttpKernel\EventListener\ExceptionListener::class)
+        $this->container->register('listener.exception', HttpKernel\EventListener\ErrorListener::class)
             ->setArguments(array('Bolzen\Core\Controller\ErrorController::exception'));
-        ;
 
         $this->container->register('controllerLoader', ControllerLoader::class);
         $this->container->register('modelLoader', ModelLoader::class);
@@ -89,8 +89,9 @@ class Container
                 new Reference('database'),
                 new Reference('config')
 
-                ))
+            ))
         ;
+
 
         $this->container->register('dispatcher', EventDispatcher\EventDispatcher::class)
             ->addMethodCall('addSubscriber', array(new Reference('listener.router')))
