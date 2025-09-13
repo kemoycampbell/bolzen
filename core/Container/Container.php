@@ -9,16 +9,20 @@
 namespace Bolzen\Core\Container;
 
 use Bolzen\Core\AccessControl\AccessControl;
+use Bolzen\Core\Container\Container;
 use Bolzen\Core\Config\Config;
 use Bolzen\Core\Controller\Controller;
 use Bolzen\Core\Controller\ControllerLoader;
 use Bolzen\Core\Controller\ErrorController;
 use Bolzen\Core\Database\Database;
+use Bolzen\Core\Database\NullDatabase;
 use Bolzen\Core\Model\Model;
 use Bolzen\Core\Model\ModelLoader;
+use Bolzen\Core\Plugin\PluginLoader;
 use Bolzen\Core\Session\Session;
 use Bolzen\Core\Twig\Twig;
 use Bolzen\Core\User\User;
+use Bolzen\Plugins\Database\MySQLDatabasePlugin;
 use Bolzen\Src\Exception\InvalidArgumentExceptionSubscriber;
 use Symfony\Component\DependencyInjection;
 use Symfony\Component\DependencyInjection\Reference;
@@ -57,7 +61,24 @@ class Container
 
         $this->container->register('config', Config::class);
         $this->container->register('session', Session::class);
-        $this->container->register('database', Database::class)->setArguments(array(new Reference('config')));
+        
+        // Plugin loader system
+        $this->container->register('plugin_loader', PluginLoader::class)
+            ->setArguments(array(new Reference('config')));
+
+        // Load plugins - Register database plugin
+        $mysqlPlugin = new MySQLDatabasePlugin($this->container->get('config'));
+        $this->container->get('plugin_loader')->registerPlugin($mysqlPlugin);
+
+        // Load database - either from plugin or use NullDatabase
+        if ($this->container->get('config')->isDatabaseRequired()) {
+            // Load plugins that are enabled
+            $this->container->get('plugin_loader')->loadEnabledPlugins($this->container);
+        } else {
+            // Register NullDatabase for non-database applications
+            $this->container->register('database', NullDatabase::class)
+                ->setArguments(array(new Reference('config')));
+        }
 
         $this->container->register('listener.exception', HttpKernel\EventListener\ErrorListener::class)
             ->setArguments(array('Bolzen\Core\Controller\ErrorController::exception'));
@@ -72,8 +93,6 @@ class Container
                 new Reference('accessControl')
             ))
         ;
-
-
 
         $this->container->register('user', User::class)
             ->setArguments(array(

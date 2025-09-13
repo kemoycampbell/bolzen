@@ -37,7 +37,27 @@ interface DatabaseInterface
     public function select(string $table, string $columns, string $where = "", array $bindings = array()): PDOStatement;
 
     /**
-     * Perform an insert sql statement
+     * Create/Insert a new record (CRUD - Create)
+     * @param string $table the table to insert into
+     * @param string $columns the columns to insert into
+     * @param array $bindings the parameterized data to insert into the columns.
+     *                        must be in the same order as the column
+     * @return bool true if successful. False otherwise
+     */
+    public function create(string $table, string $columns, array $bindings):bool;
+
+    /**
+     * Read/Select records (CRUD - Read) - alias for select method
+     * @param string $table the table to perform the sql on
+     * @param string $columns the columns to select
+     * @param string $where the where clause example "id=?"
+     * @param array $bindings the bindings for the where clause(s)
+     * @return PDOStatement return a PDOStatement after the sql has been executed
+     */
+    public function read(string $table, string $columns, string $where = "", array $bindings = array()): PDOStatement;
+
+    /**
+     * Perform an insert sql statement (legacy method name for backward compatibility)
      * @param string $table the table to insert into
      * @param string $columns the columns to insert into
      * @param array $bindings the parameterized data to insert into the columns.
