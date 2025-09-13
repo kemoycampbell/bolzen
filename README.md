@@ -5,6 +5,74 @@ simple and complex web applications or websites. Bolzen follows the principle of
 software. Bolzen is layout in a way that allow you to deploy your application in no time. It is designed in a way that
 little to no configuration is required when deploying to various stages of development such as dev, staging and production.
 
+## Plugin System
+Bolzen now features a modular plugin system that allows you to selectively enable or disable functionality based on your project needs. This makes the framework more flexible and suitable for both simple websites and complex database-driven applications.
+
+### Database Plugin (Optional)
+The database functionality in Bolzen is now completely optional through the plugin system. This means:
+- **Simple projects** can run without any database overhead
+- **Database projects** can enable the MySQL database plugin as needed
+- **Clear error messages** are provided if database operations are attempted without the plugin enabled
+
+### Enabling the Database Plugin
+To enable database functionality:
+
+1. Set `enable_database: true` in your `config/config.yaml`
+2. Create a `.env` file in the `config/` directory with your database credentials:
+    ```
+    DB_PREFIX=mysql
+    DB_USER=your_username
+    DB_PASS=your_password
+    DB_HOST=localhost
+    DB_NAME=your_database_name
+    ```
+
+### Running Without Database
+For projects that don't need database functionality:
+1. Set `enable_database: false` in your `config/config.yaml`
+2. No `.env` file is needed
+3. Models and controllers will work normally, but database operations will throw clear error messages if accidentally called
+
+### Backward Compatibility
+- All existing database code will continue to work unchanged
+- Legacy method names (`insert`, `select`, `update`, `delete`) are still supported
+- New CRUD method names (`create`, `read`, `update`, `delete`) are now available for consistency
+- Existing projects using the database will automatically use the MySQL plugin when `enable_database: true`
+
+### Plugin Development
+To create your own plugins:
+
+1. Implement the `Bolzen\Core\Plugin\PluginInterface`
+2. Place your plugin in the `plugins/` directory
+3. Register your plugin in the container system (see `core/Container/Container.php` for examples)
+
+Example plugin structure:
+```php
+<?php
+namespace Bolzen\Plugins\YourPlugin;
+
+use Bolzen\Core\Plugin\PluginInterface;
+
+class YourPlugin implements PluginInterface
+{
+    public function getName(): string
+    {
+        return 'your_plugin';
+    }
+
+    public function isEnabled(): bool
+    {
+        // Check configuration or other conditions
+        return true;
+    }
+
+    public function load($container): void
+    {
+        // Register your services with the DI container
+    }
+}
+```
+
 # Inspiration behind the name
 Bolzen is German for Bolt
 

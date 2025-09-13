@@ -5,13 +5,14 @@
  * Time: 7:58 PM
  */
 
-namespace Bolzen\Core\Database;
+namespace Bolzen\Plugins\Database;
 
 use Bolzen\Core\Config\ConfigInterface;
+use Bolzen\Core\Database\DatabaseInterface;
 use PDO;
 use PDOStatement;
 
-class Database implements DatabaseInterface
+class MySQLDatabase implements DatabaseInterface
 {
 
     private $pdo;

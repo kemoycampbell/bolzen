@@ -4,7 +4,8 @@
   "autoload": {
     "psr-4": {
       "Bolzen\\Core\\": "core/",
-      "Bolzen\\Src\\":"src/"
+      "Bolzen\\Src\\":"src/",
+      "Bolzen\\Plugins\\":"plugins/"
     }
   },
   "require": {
