@@ -285,6 +285,26 @@ I will go ahead and create a model class called HomeModel.php hence my src will 
     ├── container.php     
 ```
 
+## Enabling the Database Plugin
+
+To use database functionality in your Bolzen application:
+
+1. **Enable the database plugin in your configuration:**
+   Set `enable_database: true` in your `config/config.yaml` file.
+
+2. **Configure database connection:**
+   Create a `.env` file in the `config/` directory with your database credentials:
+   ```
+   DB_PREFIX=mysql
+   DB_USER=your_username
+   DB_PASS=your_password
+   DB_HOST=localhost
+   DB_NAME=your_database_name
+   ```
+
+3. **Import sample database tables (optional):**
+   If you want to use Bolzen's built-in user and role management, import the tables from `bolzen.sql`
+
 Inside my model, I will just write some codes that list all the users in the account table hence my 
 HomeModel.php class will contain those codes
 
@@ -302,9 +322,48 @@ class HomeModel extends Model
         $table = "accounts";
         $columns = "username";
         return $this->database->select($table, $columns)->fetchAll();
+        
+        // Alternative using new CRUD method names:
+        // return $this->database->read($table, $columns)->fetchAll();
     }
 
+    public function createUser(string $username, string $email):bool
+    {
+        // Using new CRUD method name
+        return $this->database->create("accounts", "username,email", [$username, $email]);
+        
+        // Legacy method name still works:
+        // return $this->database->insert("accounts", "username,email", [$username, $email]);
+    }
 }
+```
+
+## Running Without Database (Non-CRUD Projects)
+
+For simple websites that don't need database functionality:
+
+1. **Disable the database plugin:**
+   Set `enable_database: false` in your `config/config.yaml` file.
+
+2. **No `.env` file needed:**
+   You can omit the `.env` file entirely.
+
+3. **Your models will work normally:**
+   Just don't call any database methods. If you accidentally do, you'll get a clear error message:
+   
+   ```
+   Database operation 'select' cannot be performed: No database plugin is enabled. 
+   To use database functionality, enable a database plugin in your configuration 
+   (set 'enable_database: true' in config.yaml and configure database connection settings).
+   ```
+
+## Backward Compatibility Notes
+
+- **All existing code continues to work unchanged** - no migration needed
+- **Legacy method names** (`insert`, `select`, `update`, `delete`) are fully supported
+- **New CRUD method names** (`create`, `read`, `update`, `delete`) are available for consistency
+- **Existing database projects** automatically use the MySQL plugin when `enable_database: true`
+- **Configuration-based switching** between database and non-database modes
 ```
 We will then need to update our controller to call this model thus we will need to modify our controller as follow
 ```php
